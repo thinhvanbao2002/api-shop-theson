@@ -3,8 +3,6 @@ import { CreateCartDto } from "./dto/create-cart.dto";
 import { UpdateCartDto } from "./dto/update-cart.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { CartModel } from "./model/cart.model";
-import { PageDto } from "src/common/dto/page.dto";
-import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { ProductModel } from "../product/model/product.model";
 
 @Injectable()
@@ -15,10 +13,16 @@ export class CartService {
 	) {}
 
 	async create(createCartDto: CreateCartDto, req: any) {
-		const { product_id, product_number, total_price } = createCartDto;
+		const { product_id, product_number } = createCartDto;
 		const customerId = req?.user?.id;
 
 		const foundProduct = await this.productRepository.findByPk(product_id);
+
+		if (!foundProduct) {
+			throw new NotFoundException("Sản phẩm không tồn tại!");
+		}
+
+		const totalPrice = product_number * Number(foundProduct.price);
 
 		if (foundProduct.quantity <= product_number) {
 			throw new BadRequestException("Sản phẩm không đủ!");
@@ -32,7 +36,7 @@ export class CartService {
 			customer_id: customerId,
 			product_id: product_id,
 			product_number: product_number,
-			total_price: total_price,
+			total_price: totalPrice,
 		});
 
 		return cart;

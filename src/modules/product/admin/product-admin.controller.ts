@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put, UseGuards, Request } from "@nestjs/common";
+import { Get, Post, Body, Param, Delete, Query, Put, UseGuards } from "@nestjs/common";
 
 import { GenericController } from "src/common/decorators/controller.decorator";
 import { ProductAdminService } from "./product-admin.service";
@@ -16,11 +16,15 @@ export class ProductAdminController {
 	constructor(private readonly productAdminService: ProductAdminService) {}
 
 	@Post()
+	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
+	@UseGuards(JwtAuthGuard, RolesGuard)
 	async create(@Body() createProductDto: CreateProductDto) {
 		return await this.productAdminService.create(createProductDto);
 	}
 
 	@Get()
+	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
+	@UseGuards(JwtAuthGuard, RolesGuard)
 	async findAll(@Query() dto: SearchProductDto) {
 		console.log(dto);
 
@@ -29,16 +33,22 @@ export class ProductAdminController {
 	}
 
 	@Get(":productId")
+	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
+	@UseGuards(JwtAuthGuard, RolesGuard)
 	async findOne(@Param("productId") productId: number) {
 		return await this.productAdminService.findOne(+productId);
 	}
 
 	@Put(":id")
+	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
+	@UseGuards(JwtAuthGuard, RolesGuard)
 	async update(@Param("id") id: string, @Body() updateProductDto: UpdateProductDto) {
 		return this.productAdminService.update(+id, updateProductDto);
 	}
 
 	@Delete(":productId")
+	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
+	@UseGuards(JwtAuthGuard, RolesGuard)
 	async remove(@Param("productId") productId: number) {
 		return await this.productAdminService.remove(+productId);
 	}
@@ -46,7 +56,7 @@ export class ProductAdminController {
 	@Post("import/:productId")
 	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
 	@UseGuards(JwtAuthGuard, RolesGuard)
-	async importProduct(@Param("productId") productId: number, @Body() dto: ImportProductDto, @Request() req) {
-		return await this.productAdminService.import(+productId, dto, req);
+	async importProduct(@Param("productId") productId: number, @Body() dto: ImportProductDto) {
+		return await this.productAdminService.import(+productId, dto);
 	}
 }

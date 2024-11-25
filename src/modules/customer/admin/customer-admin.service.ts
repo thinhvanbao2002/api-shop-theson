@@ -8,7 +8,6 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { UserModel } from "src/modules/user/model/user.model";
 import { CustomerModel } from "../model/customer.model";
 import { CustomerInfoModel } from "src/modules/customer-info/model/customer-info.model";
-import { CustomerWalletModel } from "src/modules/customer-wallet/model/customer-wallet.model";
 import { FilterCustomerDto } from "../dto/filter-customers.dto";
 import { UserRoles } from "src/modules/user/types/user.type";
 import { UpdateCustomerDto } from "../dto/update-customer.dto";
@@ -19,7 +18,6 @@ export class CustomerAdminService {
 	constructor(
 		@InjectModel(UserModel) private readonly userRepository: typeof UserModel,
 		@InjectModel(CustomerModel) private readonly customerRepository: typeof CustomerModel,
-		@InjectModel(CustomerWalletModel) private readonly customerWalletRepository: typeof CustomerWalletModel,
 		@InjectModel(CustomerInfoModel) private readonly customerInfoRepository: typeof CustomerInfoModel,
 	) {}
 
@@ -57,7 +55,7 @@ export class CustomerAdminService {
 
 		const customers = await this.userRepository.findAndCountAll({
 			where: whereOptions,
-			include: [{ model: CustomerModel, include: [{ model: CustomerWalletModel }] }],
+			include: [{ model: CustomerModel }],
 			order: [["created_at", "DESC"]],
 			limit: dto.take,
 			offset: dto.skip,
@@ -68,7 +66,7 @@ export class CustomerAdminService {
 	async getSingleCustomer(customerId: number): Promise<UserModel> {
 		const foundCustomer = await this.userRepository.findOne({
 			where: { id: customerId },
-			include: [{ model: CustomerModel, include: [{ model: CustomerWalletModel }] }],
+			include: [{ model: CustomerModel }],
 		});
 		if (!foundCustomer) {
 			throw new NotFoundException(CUSTOMER_ERR.CUSTOMER_NOT_FOUND);

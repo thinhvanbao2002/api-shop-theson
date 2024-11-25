@@ -1,8 +1,4 @@
-import type {
-	CallHandler,
-	ExecutionContext,
-	NestInterceptor,
-} from "@nestjs/common";
+import type { CallHandler, ExecutionContext, NestInterceptor } from "@nestjs/common";
 import { Injectable } from "@nestjs/common";
 import { PageDto } from "../dto/page.dto";
 import { PagedResponseDto, ResponseDto } from "../dto/response.dto";
@@ -16,10 +12,7 @@ export class HttpResponseInterceptor<T> implements NestInterceptor<T> {
 	 * @param next {CallHandler}
 	 * @returns { payload:Response<T>, timestamp: string }
 	 */
-	intercept(
-		context: ExecutionContext,
-		next: CallHandler,
-	): Observable<ResponseDto<T>> {
+	intercept(context: ExecutionContext, next: CallHandler): Observable<ResponseDto<T>> {
 		return next.handle().pipe(
 			map(data => {
 				if (data instanceof PageDto) {

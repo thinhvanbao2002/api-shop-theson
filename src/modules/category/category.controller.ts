@@ -1,9 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from "@nestjs/common";
+import { Get, Body, Patch, Param, Delete, Query } from "@nestjs/common";
 import { CategoryService } from "./category.service";
-import { CreateCategoryDto } from "./dto/create-category.dto";
 import { UpdateCategoryDto } from "./dto/update-category.dto";
 import { GenericController } from "src/common/decorators/controller.decorator";
-import { CreateChildCategoryDto } from "./dto/create-child-category.dto";
 import { SearchCategoryDto } from "./dto/search-category.dto";
 
 @GenericController("category")

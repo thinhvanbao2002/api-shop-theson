@@ -1,4 +1,4 @@
-import { NumberField, NumberFieldOptional } from "src/common/decorators/field.decorator";
+import { NumberField } from "src/common/decorators/field.decorator";
 
 export class CreateCartDto {
 	@NumberField()
@@ -6,7 +6,4 @@ export class CreateCartDto {
 
 	@NumberField()
 	product_number: number;
-
-	@NumberFieldOptional()
-	total_price: number;
 }

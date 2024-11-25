@@ -1,11 +1,4 @@
-import {
-	BooleanField,
-	EnumField,
-	NumberField,
-	NumberFieldOptional,
-	StringField,
-	StringFieldOptional,
-} from "src/common/decorators/field.decorator";
+import { EnumField, NumberField, StringField, StringFieldOptional } from "src/common/decorators/field.decorator";
 import { ProductTypes } from "../types/product.type";
 import { IsArray, IsOptional } from "class-validator";
 import { CreateProductPhotoDto } from "src/modules/product-photo/dto/create-product-photo.dto";
@@ -15,20 +8,14 @@ export class CreateProductDto {
 	@StringField()
 	name: string;
 
+	@StringField()
+	product_code: string;
+
 	@NumberField()
 	category_id: number;
 
 	@NumberField()
 	price: number;
-
-	@NumberField()
-	warranty_period: string;
-
-	@StringField()
-	feature: string;
-
-	@NumberField()
-	weight: number;
 
 	@EnumField(() => ProductTypes)
 	product_type: ProductTypes;

@@ -1,7 +1,5 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Put } from "@nestjs/common";
+import { Get, Body, Patch, Param, Delete, Query, Post, Put } from "@nestjs/common";
 import { GenericController } from "src/common/decorators/controller.decorator";
-import { UpdateOrderDetailDto } from "src/modules/order-detail/dto/update-order-detail.dto";
-import { SearchOrderDto } from "../dto/search-order.dto";
 import { OrderAdminService } from "./order-admin.service";
 import { SearchOrderAdminDto } from "../dto/search-order-admin.dto";
 import { UpdateOrderDto } from "../dto/update-order.dto";
@@ -28,5 +26,15 @@ export class OrderAdminController {
 	@Delete(":id")
 	async delete(@Param("id") id: number) {
 		return this.orderAdminService.delete(+id);
+	}
+
+	@Put("/cancel/:id")
+	async cancelOrder(@Param("id") id: number) {
+		return this.orderAdminService.cancelOrder(id);
+	}
+
+	@Post("/trigerWorkFlow/:id")
+	async trigerWorkflow(@Param("id") id: number) {
+		return this.orderAdminService.trigerWorkFlow(id);
 	}
 }

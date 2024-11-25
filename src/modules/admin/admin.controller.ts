@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Param, Put, Query, UseGuards } from "@nestjs/common";
+import { Body, Delete, Get, Param, Post, Put, Query, UseGuards } from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { GenericController } from "src/common/decorators/controller.decorator";
 import { AdminPageOptionDto } from "./dto/admin-page-option.dto";
@@ -7,10 +7,18 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRoles } from "../user/types/user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { CreateAdminDto } from "./dto/create-admin.dto";
 
 @GenericController("admin")
 export class AdminController {
 	constructor(private readonly adminService: AdminService) {}
+
+	@Post()
+	@Roles(UserRoles.ADMIN)
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	async createManager(@Body() dto: CreateAdminDto) {
+		return this.adminService.createAdmin(dto);
+	}
 
 	@Get()
 	@Roles(UserRoles.ADMIN)

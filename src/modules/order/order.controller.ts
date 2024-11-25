@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Query } from "@nestjs/common";
+import { Get, Post, Body, Patch, Param, UseGuards, Request, Query } from "@nestjs/common";
 import { OrderService } from "./order.service";
 import { CreateOrderDto } from "./dto/create-order.dto";
-import { UpdateOrderDto } from "./dto/update-order.dto";
 import { GenericController } from "src/common/decorators/controller.decorator";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRoles } from "../user/types/user.type";
@@ -41,10 +40,5 @@ export class OrderController {
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async cancelOrder(@Param("id") id: number, @Body() dto: CancelOrderDto) {
 		return this.orderService.cancelOrder(+id, dto);
-	}
-
-	@Delete(":id")
-	remove(@Param("id") id: string) {
-		return this.orderService.remove(+id);
 	}
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { UserModel } from "../user/model/user.model";
 import { AdminPageOptionDto } from "./dto/admin-page-option.dto";
@@ -10,6 +10,9 @@ import { Op } from "sequelize";
 import { ADMIN_ERROR } from "./constants/admin.constant";
 import { UpdateAdminDto } from "./dto/update-admin.dto";
 import { UserRoles } from "../user/types/user.type";
+import { CreateAdminDto } from "./dto/create-admin.dto";
+import { ERR_USER } from "../user/constants/user.constant";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class AdminService {
@@ -18,6 +21,38 @@ export class AdminService {
 		@InjectModel(AdminModel)
 		private readonly adminRepository: typeof AdminModel,
 	) {}
+
+	async createAdmin(dto: CreateAdminDto): Promise<any> {
+		const { phone, email, password } = dto;
+		console.log("🚀 ~ AdminService ~ createAdmin ~ phone:", phone);
+		console.log("🚀 ~ AdminService ~ createAdmin ~ password:", password);
+
+		const foundPhone = await this.userRepository.findOne({
+			where: { phone: phone },
+		});
+		const foundEmail = await this.userRepository.findOne({
+			where: { email: email },
+		});
+
+		if (foundPhone) {
+			throw new BadRequestException(ERR_USER.PHONE_EXITS);
+		}
+		if (foundEmail) {
+			throw new BadRequestException(ERR_USER.EMAIL_EXITS);
+		}
+
+		const SALT = bcrypt.genSaltSync();
+
+		const passwordHash = await bcrypt.hash(password, SALT);
+		const dataUser = await this.userRepository.sequelize.transaction(async transaction => {
+			const user = await this.userRepository.create({ ...dto, password: passwordHash }, { transaction });
+
+			await this.adminRepository.create({ id: user.id }, { transaction });
+
+			return user;
+		});
+		return dataUser;
+	}
 
 	async findAll(dto: AdminPageOptionDto) {
 		const { q, status, from_date, to_date } = dto;

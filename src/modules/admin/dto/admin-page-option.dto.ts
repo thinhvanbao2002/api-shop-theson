@@ -1,7 +1,4 @@
-import {
-	DateFieldOptional,
-	EnumFieldOptional,
-} from "src/common/decorators/field.decorator";
+import { DateFieldOptional, EnumFieldOptional } from "src/common/decorators/field.decorator";
 import { PageOptionsDto } from "src/common/dto/page-option.dto";
 import { UserStatus } from "src/modules/user/types/user.type";
 

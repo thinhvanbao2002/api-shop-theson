@@ -1,9 +1,6 @@
 import {
-	BooleanField,
 	BooleanFieldOptional,
-	EnumField,
 	EnumFieldOptional,
-	NumberField,
 	NumberFieldOptional,
 	StringField,
 	StringFieldOptional,
@@ -22,15 +19,6 @@ export class UpdateProductDto {
 
 	@NumberFieldOptional()
 	price?: number;
-
-	@NumberFieldOptional()
-	warranty_period?: string;
-
-	@StringFieldOptional()
-	feature?: string;
-
-	@NumberFieldOptional()
-	weight?: number;
 
 	@EnumFieldOptional(() => ProductTypes)
 	product_type?: ProductTypes;

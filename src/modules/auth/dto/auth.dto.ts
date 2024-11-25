@@ -2,7 +2,7 @@ import { EmailFieldOptional, StringFieldOptional } from "src/common/decorators/f
 
 export class AuthPayloadDto {
 	@StringFieldOptional()
-	email?: string;
+	phone?: string;
 
 	@StringFieldOptional()
 	password?: string;

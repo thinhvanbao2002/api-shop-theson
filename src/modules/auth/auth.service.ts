@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { UserModel } from "../user/model/user.model";
 import { InjectModel } from "@nestjs/sequelize";
 import { JwtService } from "@nestjs/jwt";
@@ -13,11 +13,9 @@ export class AuthService {
 		@InjectModel(UserModel) private readonly userRepository: typeof UserModel,
 		private jwtService: JwtService,
 	) {}
-	async validateAdmin(email: string, password: string) {
-		console.log("email", email);
-
+	async validateAdmin(phone: string, password: string) {
 		const foundAmdin = await this.userRepository.findOne({
-			where: { phone: email },
+			where: { phone: phone },
 		});
 		if (!foundAmdin) {
 			throw new NotFoundException("Tài khoản không tồn tại");

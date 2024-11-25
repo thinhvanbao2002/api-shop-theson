@@ -4,7 +4,6 @@ import { UpdateCustomerDto } from "./dto/update-customer.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { UserModel } from "../user/model/user.model";
 import { CustomerModel } from "./model/customer.model";
-import { CustomerWalletModel } from "../customer-wallet/model/customer-wallet.model";
 import { CustomerInfoModel } from "../customer-info/model/customer-info.model";
 import { ERR_USER } from "../user/constants/user.constant";
 import * as bcrypt from "bcrypt";
@@ -20,7 +19,6 @@ export class CustomerService {
 	constructor(
 		@InjectModel(UserModel) private readonly userRepository: typeof UserModel,
 		@InjectModel(CustomerModel) private readonly customerRepository: typeof CustomerModel,
-		@InjectModel(CustomerWalletModel) private readonly customerWalletRepository: typeof CustomerWalletModel,
 		@InjectModel(CustomerInfoModel) private readonly customerInfoRepository: typeof CustomerInfoModel,
 	) {}
 	async registerCustomer(createCustomerDto: CreateCustomerDto) {
@@ -40,8 +38,6 @@ export class CustomerService {
 			throw new BadRequestException(ERR_USER.EMAIL_EXITS);
 		}
 		await this.userRepository.sequelize.transaction(async transaction => {
-			const customerWallet = await this.customerWalletRepository.create({}, { transaction });
-
 			const SALT = bcrypt.genSaltSync();
 
 			const passwordHash = await bcrypt.hash(password, SALT);
@@ -61,7 +57,6 @@ export class CustomerService {
 			await this.customerRepository.create(
 				{
 					id: user.id,
-					wallet_id: customerWallet.id,
 				},
 				{ transaction },
 			);

@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { CreateOrderDetailDto } from "src/modules/order-detail/dto/create-order-detail.dto";
 import { UpdateOrderDetailDto } from "src/modules/order-detail/dto/update-order-detail.dto";
 import { SearchOrderAdminDto } from "../dto/search-order-admin.dto";
-import { WhereOptions } from "sequelize";
+import { where, WhereOptions } from "sequelize";
 import { Op } from "sequelize";
 import { InjectModel } from "@nestjs/sequelize";
 import { OrderModel } from "../model/order.model";
@@ -35,9 +35,11 @@ export class OrderAdminService {
 		if (from_date) {
 			dateConditions.push({ [Op.gte]: from_date });
 		}
+
 		if (to_date) {
 			dateConditions.push({ [Op.lte]: to_date });
 		}
+
 		if (dateConditions.length > 0) {
 			whereOptions.created_at = { [Op.and]: dateConditions };
 		}
@@ -110,5 +112,48 @@ export class OrderAdminService {
 		await this.orderRp.destroy({
 			where: { id },
 		});
+	}
+
+	async cancelOrder(id: number) {
+		const foundOrder = await this.orderRp.findByPk(id);
+
+		if (!foundOrder) {
+			throw new NotFoundException("Không tồn tại đơn hàng!");
+		}
+
+		await this.orderRp.update(
+			{
+				order_status: OrderType.CANCELLED,
+			},
+			{
+				where: { id },
+			},
+		);
+	}
+
+	async trigerWorkFlow(id: number) {
+		const foundOrder = await this.orderRp.findByPk(id);
+		const maxStep = Number(OrderType.COMPLETED);
+
+		if (!foundOrder) {
+			throw new NotFoundException("Không tồn tại đơn hàng!");
+		}
+
+		const newStatus = Number(foundOrder.order_status) + 1;
+
+		if (newStatus > maxStep) {
+			throw new BadRequestException("Đơn hàng đã hoàn thành!");
+		}
+
+		await this.orderRp.update(
+			{
+				order_status: newStatus,
+			},
+			{
+				where: { id },
+			},
+		);
+
+		return newStatus;
 	}
 }

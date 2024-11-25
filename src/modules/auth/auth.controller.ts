@@ -1,4 +1,4 @@
-import { Post, Body, Request, UseGuards, Put } from "@nestjs/common";
+import { Post, Body, Request, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AuthPayloadDto } from "./dto/auth.dto";
 import { GenericController } from "src/common/decorators/controller.decorator";
@@ -14,8 +14,8 @@ export class AuthController {
 
 	@Post("login")
 	async create(@Body() authPayload: AuthPayloadDto) {
-		const { email, password } = authPayload;
-		return await this.authService.validateAdmin(email, password);
+		const { phone, password } = authPayload;
+		return await this.authService.validateAdmin(phone, password);
 	}
 
 	@Post("change-password")

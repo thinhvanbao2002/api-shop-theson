@@ -21,19 +21,8 @@ export class ProductAdminService {
 	) {}
 
 	async create(createProductDto: CreateProductDto) {
-		const {
-			name,
-			category_id,
-			price,
-			warranty_period,
-			feature,
-			weight,
-			product_type,
-			quantity,
-			product_photo,
-			description,
-			image,
-		} = createProductDto;
+		const { name, category_id, product_code, price, product_type, quantity, product_photo, description, image } =
+			createProductDto;
 
 		const foundCategory = await this.categoryRepository.findOne({
 			where: { id: category_id },
@@ -46,12 +35,10 @@ export class ProductAdminService {
 		const product = await this.productRepository.sequelize.transaction(async transaction => {
 			const newProduct = await this.productRepository.create(
 				{
+					product_code,
 					name,
 					category_id,
 					price,
-					feature,
-					warranty_period,
-					weight,
 					product_type,
 					quantity,
 					description,
@@ -60,10 +47,10 @@ export class ProductAdminService {
 				{ transaction },
 			);
 			if (product_photo && product_photo.length > 0) {
-				const payloadProductPhoto = product_photo.map(url => {
+				const payloadProductPhoto = product_photo.map(item => {
 					return {
 						product_id: newProduct.id,
-						url: url,
+						url: item.url,
 					};
 				});
 
@@ -135,20 +122,7 @@ export class ProductAdminService {
 	}
 
 	async update(productId: number, updateProductDto: UpdateProductDto) {
-		const {
-			name,
-			category_id,
-			price,
-			warranty_period,
-			feature,
-			weight,
-			product_type,
-			quantity,
-			product_photo,
-			status,
-			description,
-			image,
-		} = updateProductDto;
+		const { product_photo } = updateProductDto;
 
 		const foundProduct = await this.productRepository.findOne({
 			where: { id: productId },
@@ -173,7 +147,7 @@ export class ProductAdminService {
 			if (product_photo && product_photo.length > 0) {
 				const payloadProductPhoto = product_photo.map(item => {
 					return {
-						url: item,
+						url: item.url,
 						product_id: productId,
 					};
 				});
@@ -200,7 +174,7 @@ export class ProductAdminService {
 		await this.productRepository.destroy({ where: { id: productId } });
 	}
 
-	async import(productId: number, dto: ImportProductDto, req: any) {
+	async import(productId: number, dto: ImportProductDto) {
 		const foundProduct = await this.productRepository.findOne({
 			where: { id: productId },
 		});

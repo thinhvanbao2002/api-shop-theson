@@ -30,6 +30,12 @@ export class ProductModel extends Model {
 		type: DataType.STRING,
 		allowNull: false,
 	})
+	product_code: string;
+
+	@Column({
+		type: DataType.STRING,
+		allowNull: false,
+	})
 	name: string; // Tên sản phẩm bắt buộc
 
 	@Column({
@@ -49,24 +55,6 @@ export class ProductModel extends Model {
 	price: number; // giá tiền bắt buộc
 
 	@Column({
-		type: DataType.INTEGER,
-		allowNull: false,
-	})
-	warranty_period: number; // thời gian bảo hành bắt buộc
-
-	@Column({
-		type: DataType.STRING,
-		allowNull: false,
-	})
-	feature: string; // tính năng bắt buộc
-
-	@Column({
-		type: DataType.INTEGER,
-		allowNull: false,
-	})
-	weight: number; // cân nặng bắt buộc
-
-	@Column({
 		type: DataType.ENUM(...Object.values(ProductTypes)),
 		allowNull: false,
 	})
@@ -82,19 +70,13 @@ export class ProductModel extends Model {
 		type: DataType.BOOLEAN,
 		defaultValue: true,
 	})
-	status: boolean; // trạng thái
+	status: boolean;
 
 	@Column({
 		type: DataType.INTEGER,
 		defaultValue: 0,
 	})
 	number_of_review: number; // Số lượng đánh giá
-
-	@Column({
-		type: DataType.FLOAT,
-		defaultValue: 5,
-	})
-	rating_rate: number; // tỉ lệ sao
 
 	@Column({
 		type: DataType.INTEGER,

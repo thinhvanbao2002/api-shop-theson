@@ -1,5 +1,5 @@
 export enum ProductTypes {
-	BEST_SELLING = "best_selling",
-	NEW_PRODUCT = "new_product",
-	INVENTORY = "inventory",
+	BEST_SELLING = "1",
+	NEW_PRODUCT = "2",
+	INVENTORY = "3",
 }

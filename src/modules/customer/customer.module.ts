@@ -5,12 +5,11 @@ import { SequelizeModule } from "@nestjs/sequelize";
 import { CustomerModel } from "./model/customer.model";
 import { UserModel } from "../user/model/user.model";
 import { CustomerInfoModel } from "../customer-info/model/customer-info.model";
-import { CustomerWalletModel } from "../customer-wallet/model/customer-wallet.model";
 import { CustomerAdminController } from "./admin/customer-admin.controller";
 import { CustomerAdminService } from "./admin/customer-admin.service";
 
 @Module({
-	imports: [SequelizeModule.forFeature([CustomerModel, UserModel, CustomerWalletModel, CustomerInfoModel])],
+	imports: [SequelizeModule.forFeature([CustomerModel, UserModel, CustomerInfoModel])],
 	controllers: [CustomerController, CustomerAdminController],
 	providers: [CustomerService, CustomerAdminService],
 })

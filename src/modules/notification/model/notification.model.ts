@@ -5,13 +5,10 @@ import {
 	DataType,
 	DeletedAt,
 	ForeignKey,
-	HasMany,
 	Model,
 	Table,
 	UpdatedAt,
 } from "sequelize-typescript";
-import { CustomerInfoModel } from "src/modules/customer-info/model/customer-info.model";
-import { CustomerWalletModel } from "src/modules/customer-wallet/model/customer-wallet.model";
 import { UserModel } from "src/modules/user/model/user.model";
 import { NotificationType } from "../types/notification.type";
 

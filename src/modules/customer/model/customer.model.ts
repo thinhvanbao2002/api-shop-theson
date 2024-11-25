@@ -11,7 +11,6 @@ import {
 	UpdatedAt,
 } from "sequelize-typescript";
 import { CustomerInfoModel } from "src/modules/customer-info/model/customer-info.model";
-import { CustomerWalletModel } from "src/modules/customer-wallet/model/customer-wallet.model";
 import { UserModel } from "src/modules/user/model/user.model";
 
 @Table({
@@ -27,15 +26,6 @@ export class CustomerModel extends Model {
 
 	@BelongsTo(() => UserModel)
 	user: UserModel;
-
-	@Column({
-		type: DataType.INTEGER,
-	})
-	@ForeignKey(() => CustomerWalletModel)
-	wallet_id: number;
-
-	@BelongsTo(() => CustomerWalletModel)
-	customer_wallet: CustomerWalletModel;
 
 	@Column({
 		type: DataType.INTEGER,

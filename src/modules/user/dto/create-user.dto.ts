@@ -28,11 +28,11 @@ export class CreateUserDto {
 	birth_day?: Date;
 
 	@EnumFieldOptional(() => UserStatus)
-	status: UserStatus;
+	status?: UserStatus;
 
 	@DateFieldOptional()
-	last_login: Date;
+	last_login?: Date;
 
 	@EnumField(() => UserRoles)
-	role: UserRoles;
+	role?: UserRoles;
 }

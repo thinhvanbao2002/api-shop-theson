@@ -1,15 +1,12 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateOrderDto } from "./dto/create-order.dto";
-import { UpdateOrderDto } from "./dto/update-order.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { OrderModel } from "./model/order.model";
 import { OrderDetailModel } from "../order-detail/model/order-detail.model";
 import { OrderType } from "./types/order.type";
 import { SearchOrderDto } from "./dto/search-order.dto";
-import { or, WhereOptions } from "sequelize";
+import { WhereOptions } from "sequelize";
 import { Op } from "sequelize";
-import { PageDto } from "src/common/dto/page.dto";
-import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { CancelOrderDto } from "./dto/cancel-order.dto";
 import { ProductModel } from "../product/model/product.model";
 import { CustomerModel } from "../customer/model/customer.model";
@@ -109,7 +106,6 @@ export class OrderService {
 		});
 
 		return orders;
-		// return new PageDto(orders.rows, new PageMetaDto({ itemCount: orders.count, pageOptionsDto: dto }));
 	}
 
 	async findOne(id: number) {
@@ -144,9 +140,5 @@ export class OrderService {
 			},
 			{ where: { id: id } },
 		);
-	}
-
-	remove(id: number) {
-		return `This action removes a #${id} order`;
 	}
 }

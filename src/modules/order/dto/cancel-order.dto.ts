@@ -1,10 +1,6 @@
-import { IsArray, IsOptional } from "class-validator";
-import { NumberField } from "src/common/decorators/field.decorator";
-import { ApiProperty } from "@nestjs/swagger";
-import { CreateOrderDetailDto } from "src/modules/order-detail/dto/create-order-detail.dto";
+import { StringFieldOptional } from "src/common/decorators/field.decorator";
 
 export class CancelOrderDto {
-	@NumberField()
-	@IsOptional()
+	@StringFieldOptional()
 	cancel_reason: number;
 }
