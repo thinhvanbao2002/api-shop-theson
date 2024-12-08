@@ -24,8 +24,6 @@ export class AdminService {
 
 	async createAdmin(dto: CreateAdminDto): Promise<any> {
 		const { phone, email, password } = dto;
-		console.log("🚀 ~ AdminService ~ createAdmin ~ phone:", phone);
-		console.log("🚀 ~ AdminService ~ createAdmin ~ password:", password);
 
 		const foundPhone = await this.userRepository.findOne({
 			where: { phone: phone },
