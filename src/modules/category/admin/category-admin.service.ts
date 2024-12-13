@@ -53,20 +53,14 @@ export class CategoryAdminService {
 		if (dateConditions.length > 0) {
 			whereOptions.created_at = { [Op.and]: dateConditions };
 		}
-
-		const categorys = await this.categoryRepository.findAndCountAll({
+		const categories = await this.categoryRepository.findAndCountAll({
 			where: whereOptions,
-			include: [
-				{
-					model: CategoryModel,
-					as: "children",
-				},
-			],
+			order: [["created_at", "DESC"]],
 			limit: take,
 			offset: skip,
 		});
 
-		return new PageDto(categorys.rows, new PageMetaDto({ itemCount: categorys.count, pageOptionsDto: dto }));
+		return new PageDto(categories.rows, new PageMetaDto({ itemCount: categories.count, pageOptionsDto: dto }));
 	}
 
 	async findOne(categoryId: number) {

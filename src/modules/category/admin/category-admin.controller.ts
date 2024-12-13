@@ -10,15 +10,15 @@ import { SearchCategoryDto } from "../dto/search-category.dto";
 export class CategoryAdminController {
 	constructor(private readonly categoryService: CategoryAdminService) {}
 
+	@Get()
+	async findAll(@Query() dto: SearchCategoryDto) {
+		const categories = await this.categoryService.findAll(dto);
+		return categories;
+	}
+
 	@Post()
 	async create(@Body() createCategoryDto: CreateCategoryDto) {
 		return await this.categoryService.create(createCategoryDto);
-	}
-
-	@Get()
-	async findAll(@Query() dto: SearchCategoryDto) {
-		const categorys = this.categoryService.findAll(dto);
-		return categorys;
 	}
 
 	@Get(":categoryId")

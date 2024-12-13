@@ -40,6 +40,7 @@ export class CategoryService {
 
 	async findAll(dto: SearchCategoryDto) {
 		const { q, status, from_date, to_date, take, skip } = dto;
+		console.log("🚀 ~ CategoryService ~ findAll ~ status:", status);
 		const whereOptions: WhereOptions = {};
 		const dateConditions = [];
 

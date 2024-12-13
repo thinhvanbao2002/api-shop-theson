@@ -26,8 +26,7 @@ export class ProductAdminController {
 	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async findAll(@Query() dto: SearchProductDto) {
-		console.log(dto);
-
+		console.log("🚀 ~ ProductAdminController ~ findAll ~ dto:", dto);
 		const products = await this.productAdminService.findAll(dto);
 		return products;
 	}

@@ -1,4 +1,5 @@
 import { Column, CreatedAt, DataType, DeletedAt, Model, Table, UpdatedAt } from "sequelize-typescript";
+import { CategoryStatus } from "../constants/category.contant";
 
 @Table({
 	tableName: "category",
@@ -14,8 +15,8 @@ export class CategoryModel extends Model {
 	@Column({ type: DataType.STRING, allowNull: true })
 	name: number;
 
-	@Column({ type: DataType.BOOLEAN, defaultValue: true })
-	status: boolean;
+	@Column({ type: DataType.INTEGER, defaultValue: CategoryStatus.ACTIVE })
+	status: CategoryStatus;
 
 	@CreatedAt
 	created_at: Date;
