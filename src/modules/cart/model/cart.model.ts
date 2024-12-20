@@ -13,7 +13,6 @@ import {
 } from "sequelize-typescript";
 import { CustomerModel } from "src/modules/customer/model/customer.model";
 import { ProductModel } from "src/modules/product/model/product.model";
-import { UserModel } from "src/modules/user/model/user.model";
 
 @Table({
 	tableName: "cart",

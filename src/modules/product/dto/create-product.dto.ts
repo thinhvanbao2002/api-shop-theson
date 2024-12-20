@@ -1,4 +1,10 @@
-import { EnumField, NumberField, StringField, StringFieldOptional } from "src/common/decorators/field.decorator";
+import {
+	EnumField,
+	NumberField,
+	NumberFieldOptional,
+	StringField,
+	StringFieldOptional,
+} from "src/common/decorators/field.decorator";
 import { ProductTypes } from "../types/product.type";
 import { IsArray, IsOptional } from "class-validator";
 import { CreateProductPhotoDto } from "src/modules/product-photo/dto/create-product-photo.dto";
@@ -20,8 +26,8 @@ export class CreateProductDto {
 	@EnumField(() => ProductTypes)
 	product_type: ProductTypes;
 
-	@NumberField()
-	quantity: number;
+	@NumberFieldOptional()
+	quantity?: number;
 
 	@IsArray()
 	@IsOptional()

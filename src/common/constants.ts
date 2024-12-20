@@ -15,3 +15,8 @@ export const USER_NOT_VERIFIED = 0;
 
 export const MEDIA_TYPE_IMAGE = 1;
 export const MEDIA_TYPE_VIDEO = 2;
+
+export enum CommonStatus {
+	ACTIVE = "1",
+	IN_ACTIVE = "2",
+}

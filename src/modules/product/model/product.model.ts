@@ -14,6 +14,7 @@ import { ProductTypes } from "../types/product.type";
 import { CategoryModel } from "src/modules/category/model/category.model";
 import { ProductPhotoModel } from "src/modules/product-photo/model/product-photo.model";
 import { getFullUrl } from "src/common/helpers/ultils";
+import { ProductStatus } from "../constants/product.constant";
 
 @Table({
 	tableName: "product",
@@ -67,10 +68,10 @@ export class ProductModel extends Model {
 	availability: boolean; // tình trạng (còn hàng, hết hàng)
 
 	@Column({
-		type: DataType.BOOLEAN,
-		defaultValue: true,
+		type: DataType.INTEGER,
+		defaultValue: ProductStatus.ACTIVE,
 	})
-	status: boolean;
+	status: ProductStatus;
 
 	@Column({
 		type: DataType.INTEGER,
@@ -82,7 +83,7 @@ export class ProductModel extends Model {
 		type: DataType.INTEGER,
 		defaultValue: 0,
 	})
-	quantity: number; // Số lượng còn bắt buộc
+	quantity?: number; // Số lượng còn bắt buộc
 
 	@Column({
 		type: DataType.INTEGER,

@@ -22,6 +22,7 @@ import { CartModule } from "./modules/cart/cart.module";
 import { OverviewModule } from "./modules/overview/overview.module";
 import { WebsocketModule } from "./modules/websocket/websocket.module";
 import { TransactionModule } from "./modules/transaction/transaction.module";
+import { BlogModule } from './modules/blog/blog.module';
 
 @Module({
 	imports: [
@@ -66,6 +67,7 @@ import { TransactionModule } from "./modules/transaction/transaction.module";
 		WebsocketModule,
 		TransactionModule,
 		WebsocketModule,
+		BlogModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

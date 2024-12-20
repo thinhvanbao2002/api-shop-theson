@@ -95,12 +95,11 @@ export class ProductAdminService {
 			whereOptions.created_at = { [Op.and]: dateConditions };
 		}
 
-		console.log(whereOptions);
-
 		const products = await this.productRepository.findAndCountAll({
 			where: whereOptions,
-			include: [{ model: CategoryModel }],
+			include: [{ model: CategoryModel }, { model: ProductPhotoModel }],
 			order: [["created_at", "DESC"]],
+			distinct: true,
 			limit: dto.take,
 			offset: dto.skip,
 		});
@@ -123,6 +122,7 @@ export class ProductAdminService {
 
 	async update(productId: number, updateProductDto: UpdateProductDto) {
 		const { product_photo } = updateProductDto;
+		console.log("🚀 ~ ProductAdminService ~ update ~ product_photo:", product_photo);
 
 		const foundProduct = await this.productRepository.findOne({
 			where: { id: productId },
