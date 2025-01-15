@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Request, Put } from "@nestjs/common";
+import { Get, Post, Body, Param, Delete, UseGuards, Request, Put } from "@nestjs/common";
 import { CartService } from "./cart.service";
 import { CreateCartDto } from "./dto/create-cart.dto";
 import { UpdateCartDto } from "./dto/update-cart.dto";
@@ -13,28 +13,28 @@ export class CartController {
 	constructor(private readonly cartService: CartService) {}
 
 	@Post()
-	@Roles(UserRoles.CUSTOMER)
+	@Roles(UserRoles.CUSTOMER, UserRoles.ADMIN)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async create(@Body() createCartDto: CreateCartDto, @Request() req) {
 		return await this.cartService.create(createCartDto, req);
 	}
 
 	@Get()
-	@Roles(UserRoles.CUSTOMER)
+	@Roles(UserRoles.CUSTOMER, UserRoles.ADMIN)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async findAll(@Request() req) {
 		return await this.cartService.findAll(req);
 	}
 
 	@Get(":id")
-	@Roles(UserRoles.CUSTOMER)
+	@Roles(UserRoles.CUSTOMER, UserRoles.ADMIN)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	findOne(@Param("id") id: string) {
 		return this.cartService.findOne(+id);
 	}
 
 	@Put(":id")
-	@Roles(UserRoles.CUSTOMER)
+	@Roles(UserRoles.CUSTOMER, UserRoles.ADMIN)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async update(@Param("id") id: number, @Body() updateCartDto: UpdateCartDto) {
 		console.log(updateCartDto);
@@ -43,7 +43,7 @@ export class CartController {
 	}
 
 	@Delete(":id")
-	@Roles(UserRoles.CUSTOMER)
+	@Roles(UserRoles.CUSTOMER, UserRoles.ADMIN)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async remove(@Param("id") id: number) {
 		return await this.cartService.remove(+id);

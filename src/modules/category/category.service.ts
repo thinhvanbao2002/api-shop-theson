@@ -39,46 +39,21 @@ export class CategoryService {
 	}
 
 	async findAll(dto: SearchCategoryDto) {
-		const { q, status, from_date, to_date, take, skip } = dto;
-		console.log("🚀 ~ CategoryService ~ findAll ~ status:", status);
+		const { q, take, skip } = dto;
+		console.log("🚀 ~ CategoryService ~ findAll ~ dto:", dto);
 		const whereOptions: WhereOptions = {};
-		const dateConditions = [];
-
-		whereOptions.parent_id = { [Op.is]: null };
 
 		if (q) {
 			whereOptions.name = { [Op.like]: `%${q}%` };
 		}
 
-		if (status) {
-			whereOptions.status = { [Op.eq]: status };
-		}
-
-		if (from_date) {
-			dateConditions.push({
-				[Op.gte]: from_date,
-			});
-		}
-		if (to_date) {
-			dateConditions.push({ [Op.lte]: to_date });
-		}
-		if (dateConditions.length > 0) {
-			whereOptions.created_at = { [Op.and]: dateConditions };
-		}
-
-		const categorys = await this.categoryRepository.findAndCountAll({
+		const categories = await this.categoryRepository.findAndCountAll({
 			where: whereOptions,
-			include: [
-				{
-					model: CategoryModel,
-					as: "children",
-				},
-			],
 			limit: take,
 			offset: skip,
 		});
 
-		return new PageDto(categorys.rows, new PageMetaDto({ itemCount: categorys.count, pageOptionsDto: dto }));
+		return new PageDto(categories.rows, new PageMetaDto({ itemCount: categories.count, pageOptionsDto: dto }));
 	}
 
 	async findAllChild(dto: SearchCategoryDto) {

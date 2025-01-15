@@ -1,15 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import { CreateOrderDetailDto } from "src/modules/order-detail/dto/create-order-detail.dto";
-import { UpdateOrderDetailDto } from "src/modules/order-detail/dto/update-order-detail.dto";
 import { SearchOrderAdminDto } from "../dto/search-order-admin.dto";
-import { where, WhereOptions } from "sequelize";
+import { Sequelize, WhereOptions } from "sequelize";
 import { Op } from "sequelize";
 import { InjectModel } from "@nestjs/sequelize";
 import { OrderModel } from "../model/order.model";
 import { OrderDetailModel } from "src/modules/order-detail/model/order-detail.model";
 import { PageDto } from "src/common/dto/page.dto";
 import { PageMetaDto } from "src/common/dto/page-meta.dto";
-import { CustomerModel } from "src/modules/customer/model/customer.model";
 import { UserModel } from "src/modules/user/model/user.model";
 import { ProductModel } from "src/modules/product/model/product.model";
 import { UpdateOrderDto } from "../dto/update-order.dto";
@@ -23,10 +20,22 @@ export class OrderAdminService {
 	) {}
 
 	async findAll(dto: SearchOrderAdminDto) {
-		const { order_status, from_date, to_date } = dto;
+		const { q, order_status, from_date, to_date } = dto;
 
 		const dateConditions = [];
 		const whereOptions: WhereOptions = {};
+
+		if (q) {
+			whereOptions.id = {
+				[Op.in]: [
+					Sequelize.literal(
+						`select o.id from \`order\` as o
+            join user on o.customer_id = user.id
+            where user.name like '%${q}%'`,
+					),
+				],
+			};
+		}
 
 		if (order_status) {
 			whereOptions.order_status = { [Op.eq]: order_status };
@@ -48,7 +57,7 @@ export class OrderAdminService {
 			where: whereOptions,
 			include: [
 				{ model: OrderDetailModel, include: [{ model: ProductModel }] },
-				{ model: CustomerModel, include: [{ model: UserModel }] },
+				{ model: UserModel, attributes: ["name", "phone", "email", "role"] },
 			],
 			order: [["created_at", "DESC"]],
 			limit: dto.take,
@@ -61,10 +70,7 @@ export class OrderAdminService {
 	async findOne(id: number) {
 		const foundOrder = await this.orderRp.findOne({
 			where: { id: id },
-			include: [
-				{ model: OrderDetailModel, include: [{ model: ProductModel }] },
-				{ model: CustomerModel, include: [{ model: UserModel }] },
-			],
+			include: [{ model: OrderDetailModel, include: [{ model: ProductModel }] }],
 		});
 
 		if (!foundOrder) {
@@ -81,7 +87,7 @@ export class OrderAdminService {
 			where: { id: id },
 		});
 
-		if (order_status === OrderType.COMPLETED) {
+		if (order_status === OrderType.PAID) {
 			pay_type = PayTypes.PAID;
 		}
 
@@ -123,7 +129,7 @@ export class OrderAdminService {
 
 		await this.orderRp.update(
 			{
-				order_status: OrderType.CANCELLED,
+				order_status: OrderType.CANCELED,
 			},
 			{
 				where: { id },
@@ -133,7 +139,7 @@ export class OrderAdminService {
 
 	async trigerWorkFlow(id: number) {
 		const foundOrder = await this.orderRp.findByPk(id);
-		const maxStep = Number(OrderType.COMPLETED);
+		const maxStep = Number(OrderType.PAID);
 
 		if (!foundOrder) {
 			throw new NotFoundException("Không tồn tại đơn hàng!");

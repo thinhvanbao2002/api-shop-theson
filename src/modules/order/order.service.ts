@@ -23,6 +23,7 @@ export class OrderService {
 	) {}
 
 	async create(createOrderDto: CreateOrderDto, req: any) {
+		console.log("🚀 ~ OrderService ~ create ~ createOrderDto:", createOrderDto);
 		const { total_price, items, name, phone, address, note, pay_type } = createOrderDto;
 		const customerId = req?.user?.id;
 
@@ -36,7 +37,6 @@ export class OrderService {
 					phone,
 					address,
 					note,
-					pay_type,
 				},
 				{ transaction },
 			);
@@ -53,28 +53,6 @@ export class OrderService {
 
 				if (payloadOrderItem.length > 0) {
 					await this.orderDetailRp.bulkCreate(payloadOrderItem, { transaction });
-					for (const po of payloadOrderItem) {
-						const foundProduct = await this.productRepository.findByPk(po.product_id, { transaction });
-
-						// Kiểm tra xem sản phẩm có đủ số lượng tồn kho hay không
-						if (foundProduct.quantity < po.quantity) {
-							throw new Error(`Sản phẩm ${foundProduct.name} không đủ số lượng tồn kho`);
-						}
-
-						// Trừ số lượng tồn kho của sản phẩm
-						foundProduct.quantity -= po.quantity;
-
-						// Cập nhật số lượng đã bán
-						foundProduct.sold += po.quantity;
-
-						// Lưu lại các thay đổi
-						await foundProduct.save({ transaction });
-					}
-
-					await this.cartRepository.destroy({
-						where: { customer_id: customerId, product_id: payloadOrderItem.map(po => po.product_id) },
-						transaction,
-					});
 				}
 			}
 		});
@@ -135,7 +113,7 @@ export class OrderService {
 
 		await this.orderRp.update(
 			{
-				order_status: OrderType.CANCELLED,
+				order_status: OrderType.CANCELED,
 				cancel_reason: dto.cancel_reason,
 			},
 			{ where: { id: id } },

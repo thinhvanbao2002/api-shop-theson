@@ -12,7 +12,9 @@ import {
 	UpdatedAt,
 } from "sequelize-typescript";
 import { CustomerModel } from "src/modules/customer/model/customer.model";
+import { SizeTypes } from "src/modules/order/types/order.type";
 import { ProductModel } from "src/modules/product/model/product.model";
+import { UserModel } from "src/modules/user/model/user.model";
 
 @Table({
 	tableName: "cart",
@@ -28,11 +30,11 @@ export class CartModel extends Model {
 	@Column({
 		type: DataType.INTEGER,
 	})
-	@ForeignKey(() => CustomerModel)
+	@ForeignKey(() => UserModel)
 	customer_id: number;
 
-	@BelongsTo(() => CustomerModel)
-	customer: CustomerModel;
+	@BelongsTo(() => UserModel)
+	customer: UserModel;
 
 	@Column({
 		type: DataType.INTEGER,
@@ -48,6 +50,12 @@ export class CartModel extends Model {
 		defaultValue: 1,
 	})
 	product_number: number;
+
+	@Column({
+		type: DataType.ENUM(...Object.values(SizeTypes)),
+		defaultValue: SizeTypes.L,
+	})
+	size: SizeTypes;
 
 	@Column({
 		type: DataType.BIGINT,

@@ -47,6 +47,12 @@ export class UserService {
 		return dataUser;
 	}
 
+	async getUserInfo(req: any) {
+		const userId = req?.user?.id;
+		const user = await this.userRepository.findByPk(userId);
+		return user;
+	}
+
 	findAll() {
 		return `This action returns all user`;
 	}

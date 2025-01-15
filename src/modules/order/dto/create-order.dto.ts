@@ -18,9 +18,6 @@ export class CreateOrderDto {
 	note?: string;
 
 	@NumberField()
-	customer_id: number;
-
-	@NumberField()
 	total_price: number;
 
 	@IsArray()

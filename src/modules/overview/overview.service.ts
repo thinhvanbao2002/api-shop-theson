@@ -42,7 +42,7 @@ export class OverviewService {
 				created_at: {
 					[Op.between]: [`${year}-01-01`, `${year}-12-31`],
 				},
-				order_status: OrderType.COMPLETED,
+				order_status: OrderType.PAID,
 			},
 			group: ["month"],
 			order: [["month", "ASC"]],
@@ -74,7 +74,7 @@ export class OverviewService {
 				created_at: {
 					[Op.between]: [`${year}-${month}-01`, `${year}-${month}-31`],
 				},
-				order_status: OrderType.COMPLETED,
+				order_status: OrderType.PAID,
 			},
 			group: ["day"],
 			order: [["day", "ASC"]],

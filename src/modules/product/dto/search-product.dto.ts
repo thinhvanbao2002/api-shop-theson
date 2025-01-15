@@ -6,6 +6,7 @@ import {
 } from "src/common/decorators/field.decorator";
 import { ProductTypes } from "../types/product.type";
 import { PageOptionsDto } from "src/common/dto/page-option.dto";
+import { IsArray, IsOptional } from "class-validator";
 
 export class SearchProductDto extends PageOptionsDto {
 	@EnumFieldOptional(() => ProductTypes)
@@ -25,4 +26,8 @@ export class SearchProductDto extends PageOptionsDto {
 
 	@StringFieldOptional()
 	order_price?: string;
+
+	@IsArray()
+	@IsOptional()
+	price_range?: [number, number];
 }

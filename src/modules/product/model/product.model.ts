@@ -15,6 +15,7 @@ import { CategoryModel } from "src/modules/category/model/category.model";
 import { ProductPhotoModel } from "src/modules/product-photo/model/product-photo.model";
 import { getFullUrl } from "src/common/helpers/ultils";
 import { ProductStatus } from "../constants/product.constant";
+import { ProductReviewModel } from "src/modules/product-review/model/product-review.model";
 
 @Table({
 	tableName: "product",
@@ -94,6 +95,11 @@ export class ProductModel extends Model {
 	@Column({
 		type: DataType.TEXT,
 	})
+	introduce?: string;
+
+	@Column({
+		type: DataType.TEXT,
+	})
 	description: string; // Số lượng đã bán
 
 	@Column({
@@ -106,6 +112,9 @@ export class ProductModel extends Model {
 
 	@HasMany(() => ProductPhotoModel)
 	product_photo: ProductPhotoModel[];
+
+	@HasMany(() => ProductReviewModel)
+	product_reviews: ProductReviewModel[];
 
 	@CreatedAt
 	created_at: Date;

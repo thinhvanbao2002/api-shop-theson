@@ -13,7 +13,7 @@ export class CartService {
 	) {}
 
 	async create(createCartDto: CreateCartDto, req: any) {
-		const { product_id, product_number } = createCartDto;
+		const { product_id, product_number, size } = createCartDto;
 		const customerId = req?.user?.id;
 
 		const foundProduct = await this.productRepository.findByPk(product_id);
@@ -33,6 +33,7 @@ export class CartService {
 		}
 
 		const cart = await this.cartRepository.create({
+			size,
 			customer_id: customerId,
 			product_id: product_id,
 			product_number: product_number,
@@ -59,7 +60,7 @@ export class CartService {
 	}
 
 	async update(id: number, updateCartDto: UpdateCartDto) {
-		const { product_number } = updateCartDto;
+		const { product_number, size } = updateCartDto;
 
 		const foundCart = await this.cartRepository.findOne({
 			where: { id: id },
@@ -75,14 +76,13 @@ export class CartService {
 			throw new NotFoundException("Sản phẩm trong giỏ hàng không tồn tại!");
 		}
 
-		// Cập nhật số lượng sản phẩm
 		foundCart.product_number = product_number;
+		foundCart.size = size;
 
 		if (foundCart.product_number > foundProduct.quantity) {
 			throw new BadRequestException("Số lượng sản phẩm không đủ");
 		}
 
-		// Save sẽ gọi các hooks và tính toán lại total_price
 		await foundCart.save();
 	}
 

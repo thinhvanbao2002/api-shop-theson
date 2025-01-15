@@ -1,10 +1,13 @@
-import { DateFieldOptional } from "src/common/decorators/field.decorator";
+import { DateFieldOptional, StringFieldOptional } from "src/common/decorators/field.decorator";
 import { PageOptionsDto } from "src/common/dto/page-option.dto";
 
 export class FilterBlogDto extends PageOptionsDto {
 	@DateFieldOptional()
-	fromDate: string;
+	from_date?: string;
 
 	@DateFieldOptional()
-	toDate: string;
+	to_date?: string;
+
+	@StringFieldOptional()
+	status?: string;
 }

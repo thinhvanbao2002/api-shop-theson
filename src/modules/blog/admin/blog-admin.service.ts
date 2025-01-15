@@ -20,17 +20,22 @@ export class BlogAdminService {
 	}
 
 	async findAll(dto: FilterBlogDto) {
-		const { fromDate, toDate } = dto;
+		const { q, from_date, to_date, status } = dto;
 		const whereOptions: WhereOptions = {};
+
+		if (q) whereOptions.title = { [Op.like]: `%${q}%` };
+
+		if (status) whereOptions.status = { [Op.eq]: status };
+
 		const dateConditions = [];
 
-		if (fromDate) {
+		if (from_date) {
 			dateConditions.push({
-				[Op.gte]: fromDate,
+				[Op.gte]: from_date,
 			});
 		}
-		if (toDate) {
-			dateConditions.push({ [Op.lte]: fromDate });
+		if (to_date) {
+			dateConditions.push({ [Op.lte]: to_date });
 		}
 
 		if (dateConditions.length) {
@@ -39,7 +44,7 @@ export class BlogAdminService {
 
 		const blogs = await this.blogRepository.findAndCountAll({
 			where: whereOptions,
-			attributes: ["id", "title", "blog_photo", "status", "created_at"],
+			attributes: ["id", "title", "blog_photo", "status", "created_at", "content"],
 			order: [["created_at", "DESC"]],
 			limit: dto.take,
 			offset: dto.skip,

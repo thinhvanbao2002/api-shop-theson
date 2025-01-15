@@ -3,6 +3,7 @@ import { UserRoles, UserStatus } from "../types/user.type";
 import { AdminModel } from "src/modules/admin/model/admin.model";
 import { getFullUrl } from "src/common/helpers/ultils";
 import { CustomerModel } from "src/modules/customer/model/customer.model";
+import { ProductReviewModel } from "src/modules/product-review/model/product-review.model";
 
 @Table({
 	tableName: "user",
@@ -105,4 +106,7 @@ export class UserModel extends Model {
 
 	@HasOne(() => CustomerModel)
 	customer: CustomerModel;
+
+	@HasOne(() => ProductReviewModel)
+	product_reviews: ProductReviewModel[];
 }

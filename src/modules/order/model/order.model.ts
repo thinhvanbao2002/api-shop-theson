@@ -10,11 +10,9 @@ import {
 	Table,
 	UpdatedAt,
 } from "sequelize-typescript";
-import { CustomerModel } from "src/modules/customer/model/customer.model";
-import { ProductModel } from "src/modules/product/model/product.model";
-import { UserModel } from "src/modules/user/model/user.model";
 import { OrderType, PayTypes } from "../types/order.type";
 import { OrderDetailModel } from "src/modules/order-detail/model/order-detail.model";
+import { UserModel } from "src/modules/user/model/user.model";
 
 @Table({
 	tableName: "order",
@@ -30,11 +28,11 @@ export class OrderModel extends Model {
 	@Column({
 		type: DataType.INTEGER,
 	})
-	@ForeignKey(() => CustomerModel)
+	@ForeignKey(() => UserModel)
 	customer_id: number;
 
-	@BelongsTo(() => CustomerModel)
-	customer: CustomerModel;
+	@BelongsTo(() => UserModel)
+	customer: UserModel;
 
 	@Column({
 		type: DataType.ENUM(...Object.values(OrderType)),

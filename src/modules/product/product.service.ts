@@ -8,6 +8,8 @@ import { ProductPhotoModel } from "../product-photo/model/product-photo.model";
 import { CategoryModel } from "../category/model/category.model";
 import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { PageDto } from "src/common/dto/page.dto";
+import { ProductReviewModel } from "../product-review/model/product-review.model";
+import { UserModel } from "../user/model/user.model";
 
 @Injectable()
 export class ProductService {
@@ -18,9 +20,10 @@ export class ProductService {
 	) {}
 
 	async findAll(dto: SearchProductDto) {
-		const { product_type, q, status, from_date, to_date, brand, order_price } = dto;
+		const { product_type, q, status, from_date, to_date, brand, price_range } = dto;
 		const whereOptions: WhereOptions = {};
 		const dateConditions = [];
+		const priceRangeConditions = [];
 
 		if (q) {
 			whereOptions.name = { [Op.like]: `%${q}%` };
@@ -46,14 +49,21 @@ export class ProductService {
 		if (to_date) {
 			dateConditions.push({ [Op.lte]: to_date });
 		}
+
+		if (price_range) {
+			priceRangeConditions.push({ [Op.gte]: price_range[0] }, { [Op.lte]: price_range[1] });
+		}
 		if (dateConditions.length > 0) {
 			whereOptions.created_at = { [Op.and]: dateConditions };
+		}
+		if (priceRangeConditions.length) {
+			whereOptions.price = { [Op.and]: priceRangeConditions };
 		}
 
 		const products = await this.productRepository.findAndCountAll({
 			where: whereOptions,
 			include: [{ model: CategoryModel }],
-			order: order_price ? [["price", order_price]] : [["created_at", "DESC"]],
+			order: [["created_at", "DESC"]],
 			limit: dto.take,
 			offset: dto.skip,
 		});
@@ -64,7 +74,11 @@ export class ProductService {
 	async findOne(id: number) {
 		const product = await this.productRepository.findOne({
 			where: { id: id },
-			include: [{ model: ProductPhotoModel }],
+			include: [
+				{ model: ProductPhotoModel },
+				{ model: CategoryModel },
+				{ model: ProductReviewModel, include: [{ model: UserModel }] },
+			],
 		});
 
 		if (!product) {
