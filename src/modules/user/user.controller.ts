@@ -12,8 +12,9 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 
-	@Post()
+	@Post("/register")
 	async createUser(@Body() createUserDto: CreateUserDto) {
+		console.log("🚀 ~ UserController ~ createUser ~ createUserDto:", createUserDto);
 		const admin = await this.userService.createUser(createUserDto);
 		return admin;
 	}
@@ -31,8 +32,8 @@ export class UserController {
 	}
 
 	@Patch(":id")
-	update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
-		return this.userService.update(+id, updateUserDto);
+	async update(@Param("id") id: string, @Body() updateUserDto: UpdateUserDto) {
+		return await this.userService.update(+id, updateUserDto);
 	}
 
 	@Delete(":id")

@@ -31,6 +31,8 @@ export class CategoryAdminService {
 
 	async findAll(dto: SearchCategoryDto) {
 		const { q, status, from_date, to_date, take, skip } = dto;
+		console.log("🚀 ~ CategoryAdminService ~ findAll ~ take:", take);
+		console.log("🚀 ~ CategoryAdminService ~ findAll ~ skip:", skip);
 		const whereOptions: WhereOptions = {};
 		const dateConditions = [];
 

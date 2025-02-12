@@ -39,4 +39,7 @@ export class CreateProductDto {
 
 	@StringField()
 	image: string;
+
+	@StringFieldOptional()
+	introduce: string;
 }

@@ -10,10 +10,9 @@ import {
 	Table,
 	UpdatedAt,
 } from "sequelize-typescript";
-import { CustomerModel } from "src/modules/customer/model/customer.model";
 import { OrderModel } from "src/modules/order/model/order.model";
+import { SizeTypes } from "src/modules/order/types/order.type";
 import { ProductModel } from "src/modules/product/model/product.model";
-import { UserModel } from "src/modules/user/model/user.model";
 
 @Table({
 	tableName: "order_detail",
@@ -53,6 +52,16 @@ export class OrderDetailModel extends Model {
 		type: DataType.BIGINT,
 	})
 	price: number;
+
+	@Column({
+		type: DataType.INTEGER,
+	})
+	product_number: number;
+
+	@Column({
+		type: DataType.ENUM(...Object.values(SizeTypes)),
+	})
+	size: SizeTypes;
 
 	@CreatedAt
 	created_at: Date;

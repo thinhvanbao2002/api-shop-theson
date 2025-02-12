@@ -23,8 +23,7 @@ export class OrderService {
 	) {}
 
 	async create(createOrderDto: CreateOrderDto, req: any) {
-		console.log("🚀 ~ OrderService ~ create ~ createOrderDto:", createOrderDto);
-		const { total_price, items, name, phone, address, note, pay_type } = createOrderDto;
+		const { total_price, items, name, phone, address, note, city, district, ward } = createOrderDto;
 		const customerId = req?.user?.id;
 
 		await this.orderRp.sequelize.transaction(async transaction => {
@@ -37,22 +36,35 @@ export class OrderService {
 					phone,
 					address,
 					note,
+					city,
+					district,
+					ward,
 				},
 				{ transaction },
 			);
 
 			if (items && items.length > 0) {
-				const payloadOrderItem = items.map(i => {
+				const payloadOrderItems = items.map(i => {
 					return {
 						order_id: order.id,
 						product_id: i.product_id,
 						quantity: i.quantity,
 						price: i.totalPrice,
+						size: i.size,
+						product_number: i.product_number,
 					};
 				});
 
-				if (payloadOrderItem.length > 0) {
-					await this.orderDetailRp.bulkCreate(payloadOrderItem, { transaction });
+				if (payloadOrderItems.length > 0) {
+					await this.orderDetailRp.bulkCreate(payloadOrderItems, { transaction });
+
+					for (const item of payloadOrderItems) {
+						const findProduct = await this.productRepository.findByPk(item.product_id);
+
+						findProduct.quantity -= Number(item.product_number);
+
+						await findProduct.save({ transaction });
+					}
 				}
 			}
 		});

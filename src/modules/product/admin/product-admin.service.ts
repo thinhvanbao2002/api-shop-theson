@@ -11,6 +11,8 @@ import { Op } from "sequelize";
 import { PageDto } from "src/common/dto/page.dto";
 import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { ImportProductDto } from "../dto/import-product.dto";
+import * as ExcelJS from "exceljs";
+import { format } from "date-fns";
 
 @Injectable()
 export class ProductAdminService {
@@ -21,8 +23,18 @@ export class ProductAdminService {
 	) {}
 
 	async create(createProductDto: CreateProductDto) {
-		const { name, category_id, product_code, price, product_type, quantity, product_photo, description, image } =
-			createProductDto;
+		const {
+			name,
+			category_id,
+			product_code,
+			price,
+			product_type,
+			quantity,
+			product_photo,
+			description,
+			image,
+			introduce,
+		} = createProductDto;
 
 		const foundCategory = await this.categoryRepository.findOne({
 			where: { id: category_id },
@@ -43,6 +55,7 @@ export class ProductAdminService {
 					quantity,
 					description,
 					image,
+					introduce,
 				},
 				{ transaction },
 			);
@@ -63,6 +76,7 @@ export class ProductAdminService {
 	}
 
 	async findAll(dto: SearchProductDto) {
+		console.log("🚀 ~ ProductAdminService ~ findAll ~ dto:", dto);
 		const { product_type, q, status, from_date, to_date, brand } = dto;
 		const whereOptions: WhereOptions = {};
 		const dateConditions = [];
@@ -103,6 +117,7 @@ export class ProductAdminService {
 			limit: dto.take,
 			offset: dto.skip,
 		});
+		console.log("🚀 ~ ProductAdminService ~ findAll ~ products:", products);
 
 		return new PageDto(products.rows, new PageMetaDto({ itemCount: products.count, pageOptionsDto: dto }));
 	}
@@ -187,4 +202,56 @@ export class ProductAdminService {
 
 		foundProduct.save();
 	}
+
+	async exportExcelProducts(dto: SearchProductDto) {
+		const workbook = new ExcelJS.Workbook();
+		const worksheet = workbook.addWorksheet("Báo cáo danh sách sản phẩm");
+
+		worksheet.columns = [
+			{ header: "STT", key: "index", width: 10 },
+			{ header: "Tên sản phẩm", key: "name", width: 30 },
+			{ header: "Giá tiền", key: "price", width: 30 },
+			{ header: "Trạng thái", key: "status", width: 30 },
+		];
+
+		worksheet.getRow(1).font = {
+			bold: true,
+		};
+
+		let hasNextData = true;
+		let index = 1;
+		do {
+			const pagedProducts = await this.findAll(dto);
+			pagedProducts.data.forEach(product => {
+				const row = {
+					index: index++,
+					name: product.name,
+					price: product.price,
+					status: this.convertStatus(product.status),
+				};
+
+				worksheet.addRow(row);
+			});
+			hasNextData = pagedProducts.data?.length > 0;
+			dto.page += 1;
+		} while (hasNextData);
+
+		const currentDate = format(new Date(), "dd-MM-yyyy_HH-mm-ss");
+		const fileName = `DanhSachSanPham_${currentDate}.xlsx`;
+		const filePath = `uploads/excels/${fileName}`;
+		const fileUrl = `${process.env.API_BASE_URL}/${filePath}`;
+
+		await workbook.xlsx.writeFile(filePath);
+
+		return fileUrl;
+	}
+
+	convertStatus = (status: number) => {
+		switch (status) {
+			case 1:
+				return "Đang hoạt động";
+			case 2:
+				return "Ngừng hoạt động";
+		}
+	};
 }

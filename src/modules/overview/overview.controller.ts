@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from "@nestjs/common";
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from "@nestjs/common";
 import { OverviewService } from "./overview.service";
 import { CreateOverviewDto } from "./dto/create-overview.dto";
 import { UpdateOverviewDto } from "./dto/update-overview.dto";
 import { GetRevenueByMonthDto } from "./dto/get-revenue-by-month.dto";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { UserRoles } from "../user/types/user.type";
+import { JwtAuthGuard } from "../auth/guards/jwt.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
 
 @Controller("overview")
 export class OverviewController {
@@ -14,8 +18,10 @@ export class OverviewController {
 	}
 
 	@Get()
-	findAll() {
-		return this.overviewService.findAll();
+	@Roles(UserRoles.ADMIN)
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	async findDataWebShop() {
+		return await this.overviewService.findAll();
 	}
 
 	@Get(":id")

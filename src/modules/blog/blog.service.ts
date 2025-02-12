@@ -8,6 +8,7 @@ import { InjectModel } from "@nestjs/sequelize";
 export class BlogService {
 	constructor(@InjectModel(BlogModel) private readonly blogRepository: typeof BlogModel) {}
 	async create(CreateBlogDto: CreateBlogDto) {
+		console.log("🚀 ~ BlogService ~ create ~ CreateBlogDto:", CreateBlogDto);
 		const blog = await this.blogRepository.create({
 			...CreateBlogDto,
 		});

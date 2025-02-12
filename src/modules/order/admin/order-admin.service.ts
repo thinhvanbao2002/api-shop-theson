@@ -59,6 +59,7 @@ export class OrderAdminService {
 				{ model: OrderDetailModel, include: [{ model: ProductModel }] },
 				{ model: UserModel, attributes: ["name", "phone", "email", "role"] },
 			],
+			distinct: true,
 			order: [["created_at", "DESC"]],
 			limit: dto.take,
 			offset: dto.skip,

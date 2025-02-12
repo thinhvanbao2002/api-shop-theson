@@ -1,4 +1,4 @@
-import { NumberField } from "src/common/decorators/field.decorator";
+import { NumberField, StringField } from "src/common/decorators/field.decorator";
 
 export class CreateOrderDetailDto {
 	@NumberField()
@@ -9,4 +9,10 @@ export class CreateOrderDetailDto {
 
 	@NumberField()
 	totalPrice: number;
+
+	@StringField()
+	size: string;
+
+	@NumberField()
+	product_number: string;
 }

@@ -7,16 +7,37 @@ import { Sequelize } from "sequelize-typescript";
 import { Op } from "sequelize";
 import { GetRevenueByMonthDto } from "./dto/get-revenue-by-month.dto";
 import { OrderType } from "../order/types/order.type";
+import { UserModel } from "../user/model/user.model";
+import { ProductModel } from "../product/model/product.model";
+import { CategoryModel } from "../category/model/category.model";
+import { UserRoles } from "../user/types/user.type";
 
 @Injectable()
 export class OverviewService {
-	constructor(@InjectModel(OrderModel) private readonly orderRepository: typeof OrderModel) {}
+	constructor(
+		@InjectModel(OrderModel) private readonly orderRepository: typeof OrderModel,
+		@InjectModel(UserModel) private readonly userRepository: typeof UserModel,
+		@InjectModel(ProductModel) private readonly productRepository: typeof ProductModel,
+		@InjectModel(CategoryModel) private readonly categoryRepository: typeof CategoryModel,
+	) {}
 	create(createOverviewDto: CreateOverviewDto) {
 		return "This action adds a new overview";
 	}
 
-	findAll() {
-		return `This action returns all overview`;
+	async findAll() {
+		const countOrders = await this.orderRepository.count();
+		const countUsers = await this.userRepository.count({
+			where: { role: UserRoles.CUSTOMER },
+		});
+		const countProducts = await this.productRepository.count();
+		const countCategories = await this.categoryRepository.count();
+
+		return {
+			countOrders,
+			countUsers,
+			countProducts,
+			countCategories,
+		};
 	}
 
 	findOne(id: number) {
@@ -31,7 +52,6 @@ export class OverviewService {
 		return `This action removes a #${id} overview`;
 	}
 
-	// Lấy doanh thu theo năm
 	async getRevenueByYear(year: string) {
 		const revenues = await this.orderRepository.findAll({
 			attributes: [
@@ -48,18 +68,35 @@ export class OverviewService {
 			order: [["month", "ASC"]],
 		});
 
-		const monthlyRevenue = Array(12).fill(0);
+		const monthNames = [
+			"Tháng 1",
+			"Tháng 2",
+			"Tháng 3",
+			"Tháng 4",
+			"Tháng 5",
+			"Tháng 6",
+			"Tháng 7",
+			"Tháng 8",
+			"Tháng 9",
+			"Tháng 10",
+			"Tháng 11",
+			"Tháng 12",
+		];
+
+		const monthlyRevenue = monthNames.map((month, index) => ({
+			month,
+			revenue: 0,
+		}));
 
 		revenues.forEach(revenue => {
-			const month = revenue.get("month") as number;
-			const revenueAmount = revenue.get("revenue") as string;
-			monthlyRevenue[month - 1] = parseFloat(revenueAmount);
+			const monthIndex = (revenue.get("month") as number) - 1;
+			const revenueAmount = parseFloat(revenue.get("revenue") as string);
+			monthlyRevenue[monthIndex].revenue = revenueAmount;
 		});
 
-		return { year, monthlyRevenue };
+		return { monthlyRevenue };
 	}
 
-	// API thống kê doanh thu theo từng ngày trong tháng
 	async getDailyRevenueByMonth(dto: GetRevenueByMonthDto) {
 		const { year, month } = dto;
 
@@ -86,9 +123,24 @@ export class OverviewService {
 		revenues.forEach(revenue => {
 			const day = revenue.get("day") as number;
 			const revenueAmount = revenue.get("revenue") as string;
-			dailyRevenue[day - 1] = parseFloat(revenueAmount);
+			dailyRevenue[day - 1] = this.formatPrice(revenueAmount);
 		});
 
 		return { year, month, dailyRevenue };
+	}
+
+	formatPrice(num: string | any, type?: "VND" | "$") {
+		const tmpType = type || "";
+		if (num === null || num === undefined || num === "0" || Number.isNaN(parseFloat(num))) return "";
+		const result = num.toString().replace(/,/g, "");
+		return `${
+			result
+				.toString()
+				.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1,")
+				.replace(
+					/!|@|%|\^|\*|\(|\)|\+|\=|\<|\>|\?|\/|' '|\.|\:|\;|\'|\"|\&|\#|\[|\]|~|\$|_|`|-|{|}|\||\\/g,
+					"",
+				) + tmpType
+		}`;
 	}
 }

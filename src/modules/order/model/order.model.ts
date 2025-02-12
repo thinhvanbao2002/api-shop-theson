@@ -10,7 +10,7 @@ import {
 	Table,
 	UpdatedAt,
 } from "sequelize-typescript";
-import { OrderType, PayTypes } from "../types/order.type";
+import { OrderType } from "../types/order.type";
 import { OrderDetailModel } from "src/modules/order-detail/model/order-detail.model";
 import { UserModel } from "src/modules/user/model/user.model";
 
@@ -70,10 +70,19 @@ export class OrderModel extends Model {
 	note: string;
 
 	@Column({
-		type: DataType.ENUM(...Object.values(PayTypes)),
-		defaultValue: PayTypes.NOT_PAID,
+		type: DataType.STRING,
 	})
-	pay_type: number;
+	city: string;
+
+	@Column({
+		type: DataType.STRING,
+	})
+	district: string;
+
+	@Column({
+		type: DataType.STRING,
+	})
+	ward: string;
 
 	@HasMany(() => OrderDetailModel)
 	order_details: OrderDetailModel[];

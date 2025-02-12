@@ -9,6 +9,7 @@ export class BlogController {
 
 	@Post()
 	create(@Body() createBlogDto: CreateBlogDto) {
+		console.log("🚀 ~ BlogController ~ create ~ createBlogDto:", createBlogDto);
 		return this.blogService.create(createBlogDto);
 	}
 

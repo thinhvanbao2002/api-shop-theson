@@ -1,4 +1,15 @@
-import { PartialType } from "@nestjs/swagger";
-import { CreateUserDto } from "./create-user.dto";
+import { StringFieldOptional } from "src/common/decorators/field.decorator";
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+export class UpdateUserDto {
+	@StringFieldOptional()
+	name: string;
+
+	@StringFieldOptional()
+	password: string;
+
+	@StringFieldOptional()
+	newPassword: string;
+
+	@StringFieldOptional()
+	avatar: string;
+}

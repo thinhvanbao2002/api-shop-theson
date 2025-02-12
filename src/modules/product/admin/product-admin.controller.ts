@@ -58,4 +58,11 @@ export class ProductAdminController {
 	async importProduct(@Param("productId") productId: number, @Body() dto: ImportProductDto) {
 		return await this.productAdminService.import(+productId, dto);
 	}
+
+	@Post("export")
+	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	async exportProduct(@Body() dto: SearchProductDto) {
+		return await this.productAdminService.exportExcelProducts(dto);
+	}
 }
