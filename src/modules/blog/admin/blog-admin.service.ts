@@ -8,13 +8,16 @@ import { WhereOptions } from "sequelize";
 import { Op } from "sequelize";
 import { PageDto } from "src/common/dto/page.dto";
 import { PageMetaDto } from "src/common/dto/page-meta.dto";
+import { UserModel } from "src/modules/user/model/user.model";
 
 @Injectable()
 export class BlogAdminService {
 	constructor(@InjectModel(BlogModel) private readonly blogRepository: typeof BlogModel) {}
-	async create(CreateBlogDto: CreateBlogDto) {
+	async create(CreateBlogDto: CreateBlogDto, req) {
+		const userId = req.user.id;
 		const blog = await this.blogRepository.create({
 			...CreateBlogDto,
+			created_by: userId,
 		});
 		return blog;
 	}
@@ -44,7 +47,7 @@ export class BlogAdminService {
 
 		const blogs = await this.blogRepository.findAndCountAll({
 			where: whereOptions,
-			attributes: ["id", "title", "blog_photo", "status", "created_at", "content"],
+			include: [{ model: UserModel }],
 			order: [["created_at", "DESC"]],
 			limit: dto.take,
 			offset: dto.skip,

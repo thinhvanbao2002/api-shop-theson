@@ -63,6 +63,7 @@ export class ProductAdminController {
 	@Roles(UserRoles.ADMIN, UserRoles.STAFF)
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async exportProduct(@Body() dto: SearchProductDto) {
+		console.log("🚀 ~ ProductAdminController ~ exportProduct ~ dto:", dto);
 		return await this.productAdminService.exportExcelProducts(dto);
 	}
 }

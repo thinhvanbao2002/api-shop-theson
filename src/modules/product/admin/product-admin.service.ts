@@ -6,13 +6,14 @@ import { ProductModel } from "../model/product.model";
 import { ProductPhotoModel } from "src/modules/product-photo/model/product-photo.model";
 import { CategoryModel } from "src/modules/category/model/category.model";
 import { SearchProductDto } from "../dto/search-product.dto";
-import { WhereOptions } from "sequelize";
+import { Sequelize, WhereOptions } from "sequelize";
 import { Op } from "sequelize";
 import { PageDto } from "src/common/dto/page.dto";
 import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { ImportProductDto } from "../dto/import-product.dto";
 import * as ExcelJS from "exceljs";
 import { format } from "date-fns";
+import { convertStatus } from "src/common/helpers/ultils";
 
 @Injectable()
 export class ProductAdminService {
@@ -22,19 +23,17 @@ export class ProductAdminService {
 		@InjectModel(CategoryModel) private categoryRepository: typeof CategoryModel,
 	) {}
 
+	generateProductCode() {
+		const now = new Date();
+		const datePart = now.toISOString().split("T")[0].replace(/-/g, ""); // Lấy ngày YYYYMMDD
+		const recordPart = String(Math.floor(10000 + Math.random() * 90000)); // Sinh số ngẫu nhiên 5 chữ số
+
+		return `SP-${datePart}-${recordPart}`;
+	}
+
 	async create(createProductDto: CreateProductDto) {
-		const {
-			name,
-			category_id,
-			product_code,
-			price,
-			product_type,
-			quantity,
-			product_photo,
-			description,
-			image,
-			introduce,
-		} = createProductDto;
+		const { name, category_id, price, product_type, quantity, product_photo, description, image, introduce } =
+			createProductDto;
 
 		const foundCategory = await this.categoryRepository.findOne({
 			where: { id: category_id },
@@ -47,7 +46,7 @@ export class ProductAdminService {
 		const product = await this.productRepository.sequelize.transaction(async transaction => {
 			const newProduct = await this.productRepository.create(
 				{
-					product_code,
+					product_code: this.generateProductCode(),
 					name,
 					category_id,
 					price,
@@ -76,13 +75,21 @@ export class ProductAdminService {
 	}
 
 	async findAll(dto: SearchProductDto) {
-		console.log("🚀 ~ ProductAdminService ~ findAll ~ dto:", dto);
-		const { product_type, q, status, from_date, to_date, brand } = dto;
+		const { product_type, q, status, from_date, to_date, brand, order_price } = dto;
+		console.log("🚀 ~ ProductAdminService ~ findAll ~ order_price:", order_price);
 		const whereOptions: WhereOptions = {};
 		const dateConditions = [];
+		let orderConditions: [string, "ASC" | "DESC"][] = [["created_at", "DESC"]];
 
 		if (q) {
-			whereOptions.name = { [Op.like]: `%${q}%` };
+			whereOptions.id = {
+				[Op.in]: [
+					Sequelize.literal(`
+          select product.id from product
+          where product.name like '%${q}%'
+          or product.product_code like '%${q}%'`),
+				],
+			};
 		}
 
 		if (product_type) {
@@ -94,6 +101,7 @@ export class ProductAdminService {
 		}
 
 		if (brand) {
+			console.log("🚀 ~ ProductAdminService ~ findAll ~ brand:", brand);
 			whereOptions.category_id = { [Op.eq]: brand };
 		}
 
@@ -109,15 +117,19 @@ export class ProductAdminService {
 			whereOptions.created_at = { [Op.and]: dateConditions };
 		}
 
+		if (order_price === "ASC" || order_price === "DESC") {
+			orderConditions = [["price", order_price]];
+			console.log("🚀 ~ ProductAdminService ~ findAll ~ orderConditions:", orderConditions);
+		}
+
 		const products = await this.productRepository.findAndCountAll({
 			where: whereOptions,
 			include: [{ model: CategoryModel }, { model: ProductPhotoModel }],
-			order: [["created_at", "DESC"]],
+			order: orderConditions,
 			distinct: true,
 			limit: dto.take,
 			offset: dto.skip,
 		});
-		console.log("🚀 ~ ProductAdminService ~ findAll ~ products:", products);
 
 		return new PageDto(products.rows, new PageMetaDto({ itemCount: products.count, pageOptionsDto: dto }));
 	}
@@ -212,6 +224,8 @@ export class ProductAdminService {
 			{ header: "Tên sản phẩm", key: "name", width: 30 },
 			{ header: "Giá tiền", key: "price", width: 30 },
 			{ header: "Trạng thái", key: "status", width: 30 },
+			{ header: "Danh mục", key: "category", width: 30 },
+			{ header: "Số lượng còn", key: "quantity", width: 30 },
 		];
 
 		worksheet.getRow(1).font = {
@@ -227,7 +241,9 @@ export class ProductAdminService {
 					index: index++,
 					name: product.name,
 					price: product.price,
-					status: this.convertStatus(product.status),
+					status: convertStatus(product.status),
+					category: product.category.name,
+					quantity: product.quantity,
 				};
 
 				worksheet.addRow(row);
@@ -245,13 +261,4 @@ export class ProductAdminService {
 
 		return fileUrl;
 	}
-
-	convertStatus = (status: number) => {
-		switch (status) {
-			case 1:
-				return "Đang hoạt động";
-			case 2:
-				return "Ngừng hoạt động";
-		}
-	};
 }

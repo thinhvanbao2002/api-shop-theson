@@ -75,7 +75,6 @@ export class CustomerAdminService {
 	}
 
 	async updateCustomer(customerId: number, updateCustomerDto: UpdateCustomerDto) {
-		const { name, avatar, status } = updateCustomerDto;
 		const foundCustomer = await this.userRepository.findOne({
 			where: { id: customerId },
 		});
@@ -84,9 +83,7 @@ export class CustomerAdminService {
 		}
 		await this.userRepository.update(
 			{
-				name: name,
-				avatar: avatar,
-				status: status,
+				...updateCustomerDto,
 			},
 			{
 				where: { id: customerId },

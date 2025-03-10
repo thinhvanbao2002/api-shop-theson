@@ -1,4 +1,4 @@
-import { Body, Delete, Get, Param, Put, Query } from "@nestjs/common";
+import { Body, Delete, Get, Param, Patch, Query } from "@nestjs/common";
 import { GenericController } from "src/common/decorators/controller.decorator";
 import { FilterCustomerDto } from "../dto/filter-customers.dto";
 import { CustomerAdminService } from "./customer-admin.service";
@@ -19,7 +19,7 @@ export class CustomerAdminController {
 		return await this.customerAdminService.getSingleCustomer(+customerId);
 	}
 
-	@Put(":customerId")
+	@Patch(":customerId")
 	async updateCustomer(@Param("customerId") customerId: number, @Body() dto: UpdateCustomerDto) {
 		return await this.customerAdminService.updateCustomer(+customerId, dto);
 	}

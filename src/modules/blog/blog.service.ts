@@ -3,6 +3,7 @@ import { CreateBlogDto } from "./dto/create-blog.dto";
 import { UpdateBlogDto } from "./dto/update-blog.dto";
 import { BlogModel } from "./model/blog.model";
 import { InjectModel } from "@nestjs/sequelize";
+import { UserModel } from "../user/model/user.model";
 
 @Injectable()
 export class BlogService {
@@ -16,11 +17,18 @@ export class BlogService {
 	}
 
 	async findAll() {
-		return `This action returns all blog`;
+		const blogs = await this.blogRepository.findAll({
+			include: [{ model: UserModel }],
+		});
+		return blogs;
 	}
 
-	async findOne(id: number) {
-		return `This action returns a #${id} blog`;
+	async findOne(id: string) {
+		const blog = await this.blogRepository.findOne({
+			where: { id },
+			include: [{ model: UserModel }],
+		});
+		return blog;
 	}
 
 	async update(id: number, updateBlogDto: UpdateBlogDto) {

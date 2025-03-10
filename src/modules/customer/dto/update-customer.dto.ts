@@ -1,9 +1,9 @@
-import { EnumFieldOptional, StringField, StringFieldOptional } from "src/common/decorators/field.decorator";
+import { EnumFieldOptional, StringFieldOptional } from "src/common/decorators/field.decorator";
 import { UserStatus } from "src/modules/user/types/user.type";
 
 export class UpdateCustomerDto {
-	@StringField()
-	name: string;
+	@StringFieldOptional()
+	name?: string;
 
 	@StringFieldOptional()
 	avatar?: string;

@@ -1,6 +1,17 @@
-import { Column, CreatedAt, DataType, DeletedAt, Model, Table, UpdatedAt } from "sequelize-typescript";
+import {
+	BelongsTo,
+	Column,
+	CreatedAt,
+	DataType,
+	DeletedAt,
+	ForeignKey,
+	Model,
+	Table,
+	UpdatedAt,
+} from "sequelize-typescript";
 import { CommonStatus } from "src/common/constants";
 import { getFullUrl } from "src/common/helpers/ultils";
+import { UserModel } from "src/modules/user/model/user.model";
 
 @Table({
 	tableName: "blog",
@@ -27,7 +38,7 @@ export class BlogModel extends Model {
 	blog_photo: string;
 
 	@Column({
-		type: DataType.STRING,
+		type: DataType.STRING(10000),
 	})
 	content: string;
 
@@ -37,6 +48,15 @@ export class BlogModel extends Model {
 		defaultValue: CommonStatus.ACTIVE,
 	})
 	status: string;
+
+	@Column({
+		type: DataType.INTEGER,
+	})
+	@ForeignKey(() => UserModel)
+	created_by: number;
+
+	@BelongsTo(() => UserModel)
+	user: UserModel;
 
 	@CreatedAt
 	created_at: Date;

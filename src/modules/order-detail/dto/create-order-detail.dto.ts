@@ -8,7 +8,7 @@ export class CreateOrderDetailDto {
 	quantity: number;
 
 	@NumberField()
-	totalPrice: number;
+	total_price: number;
 
 	@StringField()
 	size: string;

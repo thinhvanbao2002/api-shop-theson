@@ -48,8 +48,8 @@ export class OrderService {
 					return {
 						order_id: order.id,
 						product_id: i.product_id,
-						quantity: i.quantity,
-						price: i.totalPrice,
+						quantity: i.product_number,
+						price: i.total_price,
 						size: i.size,
 						product_number: i.product_number,
 					};

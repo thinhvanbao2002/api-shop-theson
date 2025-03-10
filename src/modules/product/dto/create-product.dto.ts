@@ -14,9 +14,6 @@ export class CreateProductDto {
 	@StringField()
 	name: string;
 
-	@StringField()
-	product_code: string;
-
 	@NumberField()
 	category_id: number;
 

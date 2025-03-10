@@ -14,6 +14,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 	constructor(public reflector: Reflector) {}
 
 	catch(exception: unknown, host: ArgumentsHost) {
+		console.log("🚀 ~ HttpExceptionFilter ~ exception:", exception);
 		if (exception instanceof HttpException) {
 			return this.handleHttpException(exception, host);
 		}

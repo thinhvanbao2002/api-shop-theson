@@ -11,6 +11,10 @@ import { UserModel } from "src/modules/user/model/user.model";
 import { ProductModel } from "src/modules/product/model/product.model";
 import { UpdateOrderDto } from "../dto/update-order.dto";
 import { OrderType, PayTypes } from "../types/order.type";
+import * as ExcelJS from "exceljs";
+import { vldOrderStatus } from "src/common/helpers/ultils";
+import { format } from "date-fns";
+import * as moment from "moment";
 
 @Injectable()
 export class OrderAdminService {
@@ -21,7 +25,6 @@ export class OrderAdminService {
 
 	async findAll(dto: SearchOrderAdminDto) {
 		const { q, order_status, from_date, to_date } = dto;
-
 		const dateConditions = [];
 		const whereOptions: WhereOptions = {};
 
@@ -42,14 +45,14 @@ export class OrderAdminService {
 		}
 
 		if (from_date) {
-			dateConditions.push({ [Op.gte]: from_date });
+			dateConditions.push({ [Op.gte]: moment(from_date).startOf("date").toDate() });
 		}
-
 		if (to_date) {
-			dateConditions.push({ [Op.lte]: to_date });
+			dateConditions.push({ [Op.lte]: moment(to_date).endOf("date").toDate() });
 		}
 
 		if (dateConditions.length > 0) {
+			console.log("🚀 ~ OrderAdminService ~ findAll ~ dateConditions:", dateConditions);
 			whereOptions.created_at = { [Op.and]: dateConditions };
 		}
 
@@ -162,5 +165,55 @@ export class OrderAdminService {
 		);
 
 		return newStatus;
+	}
+
+	async exportOrders(dto: SearchOrderAdminDto) {
+		const workbook = new ExcelJS.Workbook();
+		const worksheet = workbook.addWorksheet("Báo cáo danh sách sản phẩm");
+
+		worksheet.columns = [
+			{ header: "STT", key: "index", width: 10 },
+			{ header: "Tên khách hàng", key: "name", width: 30 },
+			{ header: "Số điện thoại", key: "phone", width: 30 },
+			{ header: "Số lượng sản phẩm", key: "number", width: 30 },
+			{ header: "Ngày đặt hàng", key: "created", width: 30 },
+			{ header: "Trạng thái", key: "status", width: 30 },
+			{ header: "Địa chỉ", key: "address", width: 30 },
+		];
+
+		worksheet.getRow(1).font = {
+			bold: true,
+		};
+
+		let hasNextData = true;
+		let index = 1;
+
+		do {
+			const pagedOrders = await this.findAll(dto);
+			pagedOrders.data.forEach(order => {
+				const row = {
+					index: index++,
+					name: order?.customer?.name,
+					phone: order?.customer?.phone,
+					number: order?.order_details.length,
+					created: order?.created_at,
+					status: vldOrderStatus(order.order_status),
+					address: order?.created_at,
+				};
+				worksheet.addRow(row);
+			});
+
+			hasNextData = pagedOrders.data.length > 0;
+			dto.page++;
+		} while (hasNextData);
+
+		const currentDate = format(new Date(), "dd-MM-yyyy_HH-mm-ss");
+		const fileName = `DanhSachDonHang_${currentDate}.xlsx`;
+		const filePath = `uploads/excels/${fileName}`;
+		const fileUrl = `${process.env.API_BASE_URL}/${filePath}`;
+
+		await workbook.xlsx.writeFile(filePath);
+
+		return fileUrl;
 	}
 }

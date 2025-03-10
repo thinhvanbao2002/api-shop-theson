@@ -37,4 +37,9 @@ export class OrderAdminController {
 	async trigerWorkflow(@Param("id") id: number) {
 		return this.orderAdminService.trigerWorkFlow(id);
 	}
+
+	@Post("/export")
+	async export(@Body("id") dto: SearchOrderAdminDto) {
+		return this.orderAdminService.exportOrders(dto);
+	}
 }
