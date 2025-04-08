@@ -198,7 +198,7 @@ export class OrderAdminService {
 					number: order?.order_details.length,
 					created: order?.created_at,
 					status: vldOrderStatus(order.order_status),
-					address: order?.created_at,
+					address: order?.address,
 				};
 				worksheet.addRow(row);
 			});
