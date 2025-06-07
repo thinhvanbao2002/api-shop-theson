@@ -169,7 +169,7 @@ export class OrderAdminService {
 
 	async exportOrders(dto: SearchOrderAdminDto) {
 		const workbook = new ExcelJS.Workbook();
-		const worksheet = workbook.addWorksheet("Báo cáo danh sách sản phẩm");
+		const worksheet = workbook.addWorksheet("Báo cáo danh sách đơn hàng");
 
 		worksheet.columns = [
 			{ header: "STT", key: "index", width: 10 },
@@ -193,12 +193,12 @@ export class OrderAdminService {
 			pagedOrders.data.forEach(order => {
 				const row = {
 					index: index++,
-					name: order?.customer?.name,
-					phone: order?.customer?.phone,
-					number: order?.order_details.length,
-					created: order?.created_at,
-					status: vldOrderStatus(order.order_status),
-					address: order?.address,
+					name: order?.customer?.name || '',
+					phone: order?.customer?.phone || '',
+					number: order?.order_details?.length || 0,
+					created: order?.created_at ? format(new Date(order.created_at), 'dd/MM/yyyy HH:mm') : '',
+					status: order?.order_status ? vldOrderStatus(Number(order.order_status)) : 'Không xác định',
+					address: order?.address || '',
 				};
 				worksheet.addRow(row);
 			});
@@ -213,7 +213,6 @@ export class OrderAdminService {
 		const fileUrl = `${process.env.API_BASE_URL}/${filePath}`;
 
 		await workbook.xlsx.writeFile(filePath);
-
 		return fileUrl;
 	}
 }

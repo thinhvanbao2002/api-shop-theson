@@ -24,9 +24,9 @@ export class CartService {
 
 		const totalPrice = product_number * Number(foundProduct.price);
 
-		if (foundProduct.quantity <= product_number) {
-			throw new BadRequestException("Sản phẩm không đủ!");
-		}
+		// if (foundProduct.quantity <= product_number) {
+		// 	throw new BadRequestException("Sản phẩm không đủ!");
+		// }
 
 		if (product_number < 1) {
 			throw new BadRequestException("Số lượng sản phẩm phải lớn hơn 1!");
@@ -79,9 +79,9 @@ export class CartService {
 		foundCart.product_number = product_number;
 		foundCart.size = size;
 
-		if (foundCart.product_number > foundProduct.quantity) {
-			throw new BadRequestException("Số lượng sản phẩm không đủ");
-		}
+		// if (foundCart.product_number > foundProduct.quantity) {
+		// 	throw new BadRequestException("Số lượng sản phẩm không đủ");
+		// }
 
 		await foundCart.save();
 	}

@@ -16,9 +16,12 @@ import { ProductPhotoModel } from "src/modules/product-photo/model/product-photo
 import { getFullUrl } from "src/common/helpers/ultils";
 import { ProductStatus } from "../constants/product.constant";
 import { ProductReviewModel } from "src/modules/product-review/model/product-review.model";
+import { WarehouseProductModel } from "src/modules/warehouse/model/warehouse-product.model";
 
 @Table({
 	tableName: "product",
+	timestamps: true,
+	paranoid: true,
 })
 export class ProductModel extends Model {
 	@Column({
@@ -115,6 +118,9 @@ export class ProductModel extends Model {
 
 	@HasMany(() => ProductReviewModel)
 	product_reviews: ProductReviewModel[];
+
+	@HasMany(() => WarehouseProductModel)
+	warehouse_products: WarehouseProductModel[];
 
 	@CreatedAt
 	created_at: Date;

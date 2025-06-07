@@ -53,7 +53,14 @@ export const ORDER_STATUS = {
 	},
 };
 
-export const vldOrderStatus = (value: string) => {
-	console.log("🚀 ~ vldOrderStatus ~ value:", value);
-	return `${ORDER_STATUS[value].text}`;
+export const vldOrderStatus = (status: number) => {
+	const orderStatus = {
+		[ORDER_TYPE.PENDING]: { text: 'Chờ xác nhận', color: 'warning' },
+		[ORDER_TYPE.PROCESSING]: { text: 'Đang chuẩn bị hàng', color: 'primary' },
+		[ORDER_TYPE.WAITING_FOR_PAYMENT]: { text: 'Đang vận chuyển', color: 'primary' },
+		[ORDER_TYPE.PAID]: { text: 'Đã thanh toán', color: 'success' },
+		[ORDER_TYPE.CANCELED]: { text: 'Đã hủy', color: 'error' },
+	};
+
+	return orderStatus[status]?.text || 'Không xác định';
 };

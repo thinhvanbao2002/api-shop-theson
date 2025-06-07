@@ -24,6 +24,7 @@ import { WebsocketModule } from "./modules/websocket/websocket.module";
 import { TransactionModule } from "./modules/transaction/transaction.module";
 import { BlogModule } from "./modules/blog/blog.module";
 import { ProductReviewModule } from "./modules/product-review/product-review.module";
+import { WarehouseModule } from "./modules/warehouse/warehouse.module";
 
 @Module({
 	imports: [
@@ -70,6 +71,7 @@ import { ProductReviewModule } from "./modules/product-review/product-review.mod
 		WebsocketModule,
 		BlogModule,
 		ProductReviewModule,
+		WarehouseModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

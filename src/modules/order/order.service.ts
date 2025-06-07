@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { OrderModel } from "./model/order.model";
@@ -12,6 +12,7 @@ import { ProductModel } from "../product/model/product.model";
 import { CustomerModel } from "../customer/model/customer.model";
 import { UserModel } from "../user/model/user.model";
 import { CartModel } from "../cart/model/cart.model";
+import { WarehouseProductService } from "../warehouse/warehouse-product.service";
 
 @Injectable()
 export class OrderService {
@@ -20,6 +21,7 @@ export class OrderService {
 		@InjectModel(OrderDetailModel) private readonly orderDetailRp: typeof OrderDetailModel,
 		@InjectModel(ProductModel) private readonly productRepository: typeof ProductModel,
 		@InjectModel(CartModel) private readonly cartRepository: typeof CartModel,
+		private readonly warehouseProductService: WarehouseProductService,
 	) {}
 
 	async create(createOrderDto: CreateOrderDto, req: any) {
@@ -64,6 +66,20 @@ export class OrderService {
 						findProduct.quantity -= Number(item.product_number);
 
 						await findProduct.save({ transaction });
+
+						try {
+							const deductedWarehouses = await this.warehouseProductService.deductStock(
+								item.product_id,
+								Number(item.quantity)
+							);
+
+							// Lưu log trừ tồn kho (tùy chọn)
+							await this.saveStockDeductionLog(order.id, item.product_id, deductedWarehouses);
+						} catch (error) {
+							// Nếu trừ tồn kho thất bại, xóa đơn hàng và rollback
+							await order.destroy();
+							throw new BadRequestException(error.message);
+						}
 					}
 				}
 			}
@@ -130,5 +146,10 @@ export class OrderService {
 			},
 			{ where: { id: id } },
 		);
+	}
+
+	// Thêm method để lưu log trừ tồn kho (tùy chọn)
+	private async saveStockDeductionLog(order_id: number, product_id: number, deductedWarehouses: any[]) {
+		// Implement logic lưu log nếu cần
 	}
 }
