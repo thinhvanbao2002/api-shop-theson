@@ -11,10 +11,12 @@ import { CartModel } from "../cart/model/cart.model";
 import { WarehouseProductService } from "../warehouse/warehouse-product.service";
 import { WarehouseModel } from "../warehouse/model/warehouse.model";
 import { WarehouseProductModel } from "../warehouse/model/warehouse-product.model";
+import { EmailService } from '../../common/services/email.service';
 
 @Module({
 	imports: [SequelizeModule.forFeature([OrderModel, OrderDetailModel, ProductModel, CartModel,WarehouseModel, WarehouseProductModel])],
 	controllers: [OrderController, OrderAdminController],
-	providers: [OrderService, OrderAdminService, WarehouseProductService],
+	providers: [OrderService, OrderAdminService, WarehouseProductService, EmailService],
+	exports: [OrderService],
 })
 export class OrderModule {}

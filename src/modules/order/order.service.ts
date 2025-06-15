@@ -13,6 +13,7 @@ import { CustomerModel } from "../customer/model/customer.model";
 import { UserModel } from "../user/model/user.model";
 import { CartModel } from "../cart/model/cart.model";
 import { WarehouseProductService } from "../warehouse/warehouse-product.service";
+import { EmailService } from '../../common/services/email.service';
 
 @Injectable()
 export class OrderService {
@@ -22,6 +23,7 @@ export class OrderService {
 		@InjectModel(ProductModel) private readonly productRepository: typeof ProductModel,
 		@InjectModel(CartModel) private readonly cartRepository: typeof CartModel,
 		private readonly warehouseProductService: WarehouseProductService,
+		private emailService: EmailService,
 	) {}
 
 	async create(createOrderDto: CreateOrderDto, req: any) {
@@ -82,6 +84,29 @@ export class OrderService {
 						}
 					}
 				}
+			}
+
+			// Fetch complete order data with details for email
+			const completeOrder = await this.orderRp.findByPk(order.id, {
+				include: [
+					{
+						model: OrderDetailModel,
+						include: [
+							{
+								model: ProductModel,
+								attributes: ['name', 'price'],
+							},
+						],
+					},
+				],
+			});
+
+			// Send confirmation email
+			try {
+				await this.emailService.sendOrderConfirmation(req.user.email, completeOrder);
+			} catch (error) {
+				console.error('Failed to send order confirmation email:', error);
+				// Don't throw error here to not affect the order creation
 			}
 		});
 	}

@@ -25,6 +25,7 @@ import { TransactionModule } from "./modules/transaction/transaction.module";
 import { BlogModule } from "./modules/blog/blog.module";
 import { ProductReviewModule } from "./modules/product-review/product-review.module";
 import { WarehouseModule } from "./modules/warehouse/warehouse.module";
+import { EmailService } from './common/services/email.service';
 
 @Module({
 	imports: [
@@ -32,24 +33,18 @@ import { WarehouseModule } from "./modules/warehouse/warehouse.module";
 			rootPath: join(__dirname, "..", "./uploads"),
 			serveRoot: "/api/v1/uploads/",
 		}),
-		ConfigModule.forRoot(),
-		SequelizeModule.forRootAsync({
-			imports: [ConfigModule],
-			useFactory: (configService: ConfigService) => ({
-				dialect: "mysql",
-				host: configService.get("DB_HOST"),
-				port: +configService.get("DB_PORT"),
-				username: configService.get("DB_USERNAME"),
-				password: configService.get("DB_PASSWORD"),
-				database: configService.get("DB_DATABASE"),
-				models: [join(process.cwd(), "dist/modules/*.model.js")],
-				autoLoadModels: true,
-				synchronize: true,
-				sync: {
-					alter: true,
-				},
-			}),
-			inject: [ConfigService],
+		ConfigModule.forRoot({
+			isGlobal: true,
+		}),
+		SequelizeModule.forRoot({
+			dialect: 'mysql',
+			host: process.env.DB_HOST,
+			port: parseInt(process.env.DB_PORT, 10),
+			username: process.env.DB_USERNAME,
+			password: process.env.DB_PASSWORD,
+			database: process.env.DB_DATABASE,
+			autoLoadModels: true,
+			synchronize: true,
 		}),
 		UploadModule,
 		UserModule,
@@ -74,6 +69,6 @@ import { WarehouseModule } from "./modules/warehouse/warehouse.module";
 		WarehouseModule,
 	],
 	controllers: [AppController],
-	providers: [AppService],
+	providers: [AppService, EmailService],
 })
 export class AppModule {}
