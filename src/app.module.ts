@@ -25,7 +25,7 @@ import { TransactionModule } from "./modules/transaction/transaction.module";
 import { BlogModule } from "./modules/blog/blog.module";
 import { ProductReviewModule } from "./modules/product-review/product-review.module";
 import { WarehouseModule } from "./modules/warehouse/warehouse.module";
-import { EmailService } from './common/services/email.service';
+import { EmailModule } from "./common/services/email.module";
 
 @Module({
 	imports: [
@@ -67,8 +67,9 @@ import { EmailService } from './common/services/email.service';
 		BlogModule,
 		ProductReviewModule,
 		WarehouseModule,
+		EmailModule,
 	],
 	controllers: [AppController],
-	providers: [AppService, EmailService],
+	providers: [AppService],
 })
 export class AppModule {}

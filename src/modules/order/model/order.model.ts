@@ -84,7 +84,7 @@ export class OrderModel extends Model {
 	})
 	ward: string;
 
-	@HasMany(() => OrderDetailModel)
+	@HasMany(() => OrderDetailModel, { foreignKey: 'order_id' })
 	order_details: OrderDetailModel[];
 
 	@CreatedAt

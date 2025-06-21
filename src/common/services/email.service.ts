@@ -10,7 +10,7 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get('MAIL_HOST'),
       port: this.configService.get('MAIL_PORT'),
-      secure: true,
+      secure: this.configService.get('MAIL_SECURE') === 'true',
       auth: {
         user: this.configService.get('MAIL_USER'),
         pass: this.configService.get('MAIL_PASSWORD'),
@@ -19,6 +19,7 @@ export class EmailService {
   }
 
   async sendOrderConfirmation(to: string, orderData: any) {
+    console.log("🚀 ~ EmailService ~ sendOrderConfirmation ~ to:", to)
     const mailOptions = {
       from: this.configService.get('MAIL_FROM'),
       to,

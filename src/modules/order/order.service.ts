@@ -78,8 +78,7 @@ export class OrderService {
 							// Lưu log trừ tồn kho (tùy chọn)
 							await this.saveStockDeductionLog(order.id, item.product_id, deductedWarehouses);
 						} catch (error) {
-							// Nếu trừ tồn kho thất bại, xóa đơn hàng và rollback
-							await order.destroy();
+							// Nếu trừ tồn kho thất bại, transaction sẽ tự rollback
 							throw new BadRequestException(error.message);
 						}
 					}
@@ -99,11 +98,22 @@ export class OrderService {
 						],
 					},
 				],
+				transaction,
 			});
 
 			// Send confirmation email
 			try {
-				await this.emailService.sendOrderConfirmation(req.user.email, completeOrder);
+				const emailData = {
+					customerName: completeOrder.name,
+					orderCode: completeOrder.id,
+					createdAt: completeOrder.created_at,
+					totalAmount: completeOrder.total_price,
+					status: completeOrder.order_status,
+					address: completeOrder.address,
+					phone: completeOrder.phone,
+					orderDetails: completeOrder.order_details,
+				  };
+				await this.emailService.sendOrderConfirmation('thinhvanbao312002@gmail.com', emailData);
 			} catch (error) {
 				console.error('Failed to send order confirmation email:', error);
 				// Don't throw error here to not affect the order creation
