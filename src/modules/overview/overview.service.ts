@@ -11,6 +11,9 @@ import { UserModel } from "../user/model/user.model";
 import { ProductModel } from "../product/model/product.model";
 import { CategoryModel } from "../category/model/category.model";
 import { UserRoles } from "../user/types/user.type";
+import { OrderDetailModel } from "../order-detail/model/order-detail.model";
+import { ProductReviewModel } from "../product-review/model/product-review.model";
+import { GetStatisticsDto } from "./dto/get-statistics.dto";
 
 @Injectable()
 export class OverviewService {
@@ -19,6 +22,8 @@ export class OverviewService {
 		@InjectModel(UserModel) private readonly userRepository: typeof UserModel,
 		@InjectModel(ProductModel) private readonly productRepository: typeof ProductModel,
 		@InjectModel(CategoryModel) private readonly categoryRepository: typeof CategoryModel,
+		@InjectModel(OrderDetailModel) private readonly orderDetailRepository: typeof OrderDetailModel,
+		@InjectModel(ProductReviewModel) private readonly productReviewRepository: typeof ProductReviewModel,
 	) {}
 	create(createOverviewDto: CreateOverviewDto) {
 		return "This action adds a new overview";
@@ -127,6 +132,127 @@ export class OverviewService {
 		});
 
 		return { year, month, dailyRevenue };
+	}
+
+	async getStatistics(dto: GetStatisticsDto) {
+		const year = dto.year || new Date().getFullYear().toString();
+		const limit = dto.limit || 5;
+
+		// 1. Top best-selling products (top sản phẩm bán chạy nhất)
+		const topSellingProducts = await this.orderDetailRepository.findAll({
+			attributes: [
+				"product_id",
+				[Sequelize.fn("SUM", Sequelize.col("OrderDetailModel.quantity")), "total_sold"],
+			],
+			include: [
+				{
+					model: OrderModel,
+					where: { order_status: OrderType.PAID },
+					attributes: [],
+				},
+				{
+					model: ProductModel,
+					attributes: ["name", "price", "image"],
+				},
+			],
+			group: ["product_id", "product.id"],
+			order: [[Sequelize.literal("total_sold"), "DESC"]],
+			limit: limit,
+		});
+
+		// 2. Top customers (khách hàng mua hàng nhiều nhất)
+		const topCustomers = await this.orderRepository.findAll({
+			attributes: [
+				"customer_id",
+				[Sequelize.fn("SUM", Sequelize.col("total_price")), "total_spent"],
+				[Sequelize.fn("COUNT", Sequelize.col("OrderModel.id")), "total_orders"],
+			],
+			where: { order_status: OrderType.PAID },
+			include: [
+				{
+					model: UserModel,
+					attributes: ["name", "email", "phone", "avatar"],
+				},
+			],
+			group: ["customer_id", "customer.id"],
+			order: [[Sequelize.literal("total_spent"), "DESC"]],
+			limit: limit,
+		});
+
+		// 3. Products with the most reviews (sản phẩm có nhiều đánh giá bình luận nhất)
+		const topReviewedProducts = await this.productReviewRepository.findAll({
+			attributes: [
+				"product_id",
+				[Sequelize.fn("COUNT", Sequelize.col("ProductReviewModel.id")), "total_reviews"],
+			],
+			include: [
+				{
+					model: ProductModel,
+					attributes: ["name", "price", "image"],
+				},
+			],
+			group: ["product_id", "product.id"],
+			order: [[Sequelize.literal("total_reviews"), "DESC"]],
+			limit: limit,
+		});
+
+		// 4. Revenue of month, year, quarter
+		const revenues = await this.orderRepository.findAll({
+			attributes: [
+				[Sequelize.fn("MONTH", Sequelize.col("created_at")), "month"],
+				[Sequelize.fn("SUM", Sequelize.col("total_price")), "revenue"],
+			],
+			where: {
+				created_at: {
+					[Op.between]: [`${year}-01-01`, `${year}-12-31`],
+				},
+				order_status: OrderType.PAID,
+			},
+			group: ["month"],
+			order: [["month", "ASC"]],
+		});
+
+		const monthlyRevenue = Array(12).fill(0).map((_, i) => ({
+			month: `Tháng ${i + 1}`,
+			revenue: 0,
+		}));
+
+		let currentYearRevenue = 0;
+		revenues.forEach(revenue => {
+			const monthVal = revenue.get("month") as number;
+			const monthIndex = monthVal - 1;
+			const revenueAmount = parseFloat(revenue.get("revenue") as string || "0");
+			monthlyRevenue[monthIndex].revenue = revenueAmount;
+			currentYearRevenue += revenueAmount;
+		});
+
+		const quarterlyRevenue = [
+			{ quarter: "Quý 1", revenue: monthlyRevenue[0].revenue + monthlyRevenue[1].revenue + monthlyRevenue[2].revenue },
+			{ quarter: "Quý 2", revenue: monthlyRevenue[3].revenue + monthlyRevenue[4].revenue + monthlyRevenue[5].revenue },
+			{ quarter: "Quý 3", revenue: monthlyRevenue[6].revenue + monthlyRevenue[7].revenue + monthlyRevenue[8].revenue },
+			{ quarter: "Quý 4", revenue: monthlyRevenue[9].revenue + monthlyRevenue[10].revenue + monthlyRevenue[11].revenue },
+		];
+
+		const now = new Date();
+		const currentMonthIndex = now.getMonth(); // 0-11
+		const currentQuarterIndex = Math.floor(currentMonthIndex / 3); // 0-3
+
+		const currentMonthRevenue = monthlyRevenue[currentMonthIndex]?.revenue || 0;
+		const currentQuarterRevenue = quarterlyRevenue[currentQuarterIndex]?.revenue || 0;
+
+		return {
+			topSellingProducts,
+			topCustomers,
+			topReviewedProducts,
+			revenue: {
+				year,
+				byMonth: monthlyRevenue,
+				byQuarter: quarterlyRevenue,
+				currentMonth: currentMonthRevenue,
+				currentQuarter: currentQuarterRevenue,
+				currentYear: currentYearRevenue,
+			}
+		};
 	}
 
 	formatPrice(num: string | any, type?: "VND" | "$") {

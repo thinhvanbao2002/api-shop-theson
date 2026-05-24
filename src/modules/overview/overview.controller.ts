@@ -7,6 +7,7 @@ import { Roles } from "../auth/decorators/roles.decorator";
 import { UserRoles } from "../user/types/user.type";
 import { JwtAuthGuard } from "../auth/guards/jwt.guard";
 import { RolesGuard } from "../auth/guards/roles.guard";
+import { GetStatisticsDto } from "./dto/get-statistics.dto";
 
 @Controller("overview")
 export class OverviewController {
@@ -22,6 +23,13 @@ export class OverviewController {
 	@UseGuards(JwtAuthGuard, RolesGuard)
 	async findDataWebShop() {
 		return await this.overviewService.findAll();
+	}
+
+	@Get("statistics")
+	@Roles(UserRoles.ADMIN)
+	@UseGuards(JwtAuthGuard, RolesGuard)
+	async getStatistics(@Query() dto: GetStatisticsDto) {
+		return await this.overviewService.getStatistics(dto);
 	}
 
 	@Get(":id")

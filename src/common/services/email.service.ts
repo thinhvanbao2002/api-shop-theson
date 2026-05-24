@@ -7,15 +7,23 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
-    this.transporter = nodemailer.createTransport({
-      host: this.configService.get('MAIL_HOST'),
-      port: this.configService.get('MAIL_PORT'),
-      secure: this.configService.get('MAIL_SECURE') === 'true',
-      auth: {
-        user: this.configService.get('MAIL_USER'),
-        pass: this.configService.get('MAIL_PASSWORD'),
-      },
-    });
+    const mailUser = this.configService.get<string>('MAIL_USER');
+    const mailPass = this.configService.get<string>('MAIL_PASSWORD');
+    const mailHost = this.configService.get<string>('MAIL_HOST');
+    const mailPort = this.configService.get<number>('MAIL_PORT');
+    const mailSecure = this.configService.get<string>('MAIL_SECURE') === 'true';
+
+    const transportConfig: nodemailer.TransportOptions = {
+      host: mailHost,
+      port: mailPort,
+      secure: mailSecure,
+      // Chỉ truyền auth khi có user (MailDev không cần auth)
+      ...(mailUser ? { auth: { user: mailUser, pass: mailPass } } : {}),
+    } as any;
+
+    this.transporter = nodemailer.createTransport(transportConfig);
+
+    console.log(`📧 EmailService initialized → ${mailHost}:${mailPort} (secure=${mailSecure})`);
   }
 
   async sendOrderConfirmation(to: string, orderData: any) {

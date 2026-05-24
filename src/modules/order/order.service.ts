@@ -29,6 +29,7 @@ export class OrderService {
 	async create(createOrderDto: CreateOrderDto, req: any) {
 		const { total_price, items, name, phone, address, note, city, district, ward } = createOrderDto;
 		const customerId = req?.user?.id;
+		const customerEmail = req?.user?.email;
 
 		await this.orderRp.sequelize.transaction(async transaction => {
 			const order = await this.orderRp.create(
@@ -113,7 +114,7 @@ export class OrderService {
 					phone: completeOrder.phone,
 					orderDetails: completeOrder.order_details,
 				  };
-				await this.emailService.sendOrderConfirmation('thinhvanbao312002@gmail.com', emailData);
+				await this.emailService.sendOrderConfirmation(customerEmail, emailData);
 			} catch (error) {
 				console.error('Failed to send order confirmation email:', error);
 				// Don't throw error here to not affect the order creation
