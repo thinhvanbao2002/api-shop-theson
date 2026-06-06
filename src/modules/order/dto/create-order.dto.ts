@@ -1,7 +1,8 @@
 import { IsArray, IsOptional } from "class-validator";
-import { NumberField, StringFieldOptional } from "src/common/decorators/field.decorator";
+import { EnumFieldOptional, NumberField, StringFieldOptional } from "src/common/decorators/field.decorator";
 import { ApiProperty } from "@nestjs/swagger";
 import { CreateOrderDetailDto } from "src/modules/order-detail/dto/create-order-detail.dto";
+import { PaymentMethodTypes, PayTypes } from "../types/order.type";
 
 export class CreateOrderDto {
 	@StringFieldOptional()
@@ -18,6 +19,12 @@ export class CreateOrderDto {
 
 	@NumberField()
 	total_price: number;
+
+	@EnumFieldOptional(() => PaymentMethodTypes)
+	payment_method?: PaymentMethodTypes;
+
+	@EnumFieldOptional(() => PayTypes)
+	pay_type?: PayTypes;
 
 	@StringFieldOptional()
 	city: string;

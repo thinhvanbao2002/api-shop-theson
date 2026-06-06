@@ -1,11 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit } from "@nestjs/common";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { OrderModel } from "./model/order.model";
 import { OrderDetailModel } from "../order-detail/model/order-detail.model";
-import { OrderType } from "./types/order.type";
+import { OrderType, PaymentMethodTypes, PayTypes } from "./types/order.type";
 import { SearchOrderDto } from "./dto/search-order.dto";
-import { WhereOptions } from "sequelize";
+import { DataTypes, WhereOptions } from "sequelize";
 import { Op } from "sequelize";
 import { CancelOrderDto } from "./dto/cancel-order.dto";
 import { ProductModel } from "../product/model/product.model";
@@ -16,7 +16,7 @@ import { WarehouseProductService } from "../warehouse/warehouse-product.service"
 import { EmailService } from '../../common/services/email.service';
 
 @Injectable()
-export class OrderService {
+export class OrderService implements OnModuleInit {
 	constructor(
 		@InjectModel(OrderModel) private readonly orderRp: typeof OrderModel,
 		@InjectModel(OrderDetailModel) private readonly orderDetailRp: typeof OrderDetailModel,
@@ -26,8 +26,33 @@ export class OrderService {
 		private emailService: EmailService,
 	) {}
 
+	async onModuleInit() {
+		await this.ensurePaymentColumns();
+	}
+
+	private async ensurePaymentColumns() {
+		const queryInterface = this.orderRp.sequelize.getQueryInterface();
+		const tableDescription = await queryInterface.describeTable("order");
+
+		if (!tableDescription.payment_method) {
+			await queryInterface.addColumn("order", "payment_method", {
+				type: DataTypes.STRING(50),
+				allowNull: false,
+				defaultValue: PaymentMethodTypes.COD,
+			});
+		}
+
+		if (!tableDescription.pay_type) {
+			await queryInterface.addColumn("order", "pay_type", {
+				type: DataTypes.ENUM(PayTypes.PAID, PayTypes.NOT_PAID),
+				allowNull: false,
+				defaultValue: PayTypes.NOT_PAID,
+			});
+		}
+	}
+
 	async create(createOrderDto: CreateOrderDto, req: any) {
-		const { total_price, items, name, phone, address, note, city, district, ward } = createOrderDto;
+		const { total_price, items, name, phone, address, note, city, district, ward, payment_method, pay_type } = createOrderDto;
 		const customerId = req?.user?.id;
 		const customerEmail = req?.user?.email;
 
@@ -37,6 +62,8 @@ export class OrderService {
 					customer_id: customerId,
 					order_status: OrderType.PENDING,
 					total_price: total_price,
+					payment_method: payment_method || PaymentMethodTypes.COD,
+					pay_type: pay_type || PayTypes.NOT_PAID,
 					name,
 					phone,
 					address,

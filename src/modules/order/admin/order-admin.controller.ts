@@ -38,6 +38,11 @@ export class OrderAdminController {
 		return this.orderAdminService.trigerWorkFlow(id);
 	}
 
+	@Post("/mark-paid/:id")
+	async markAsPaid(@Param("id") id: number) {
+		return this.orderAdminService.markAsPaid(id);
+	}
+
 	@Post("/export")
 	async export(@Body("id") dto: SearchOrderAdminDto) {
 		return this.orderAdminService.exportOrders(dto);

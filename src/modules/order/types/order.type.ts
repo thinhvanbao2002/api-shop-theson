@@ -11,6 +11,11 @@ export enum PayTypes {
 	NOT_PAID = "notpay",
 }
 
+export enum PaymentMethodTypes {
+	COD = "cod",
+	BANK_TRANSFER = "bank_transfer",
+}
+
 export enum SizeTypes {
 	S = "s",
 	M = "m",

@@ -141,6 +141,27 @@ export class OrderAdminService {
 		);
 	}
 
+	async markAsPaid(id: number) {
+		const foundOrder = await this.orderRp.findByPk(id);
+
+		if (!foundOrder) {
+			throw new NotFoundException("KhÃ´ng tá»“n táº¡i Ä‘Æ¡n hÃ ng!");
+		}
+
+		if (foundOrder.order_status === OrderType.CANCELED) {
+			throw new BadRequestException("KhÃ´ng thá»ƒ xÃ¡c nháº­n thanh toÃ¡n cho Ä‘Æ¡n hÃ ng Ä‘Ã£ há»§y!");
+		}
+
+		await this.orderRp.update(
+			{
+				pay_type: PayTypes.PAID,
+			},
+			{
+				where: { id },
+			},
+		);
+	}
+
 	async trigerWorkFlow(id: number) {
 		const foundOrder = await this.orderRp.findByPk(id);
 		const maxStep = Number(OrderType.PAID);

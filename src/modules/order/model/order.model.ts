@@ -10,7 +10,7 @@ import {
 	Table,
 	UpdatedAt,
 } from "sequelize-typescript";
-import { OrderType } from "../types/order.type";
+import { OrderType, PayTypes } from "../types/order.type";
 import { OrderDetailModel } from "src/modules/order-detail/model/order-detail.model";
 import { UserModel } from "src/modules/user/model/user.model";
 
@@ -43,6 +43,18 @@ export class OrderModel extends Model {
 		type: DataType.BIGINT,
 	})
 	total_price: number;
+
+	@Column({
+		type: DataType.STRING,
+		defaultValue: "cod",
+	})
+	payment_method: string;
+
+	@Column({
+		type: DataType.ENUM(...Object.values(PayTypes)),
+		defaultValue: PayTypes.NOT_PAID,
+	})
+	pay_type: string;
 
 	@Column({
 		type: DataType.STRING,
