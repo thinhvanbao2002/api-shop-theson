@@ -122,13 +122,27 @@ export class WarehouseService {
     }
 
     async update(id: number, dto: UpdateWarehouseDto) {
-        const warehouse = await this.findOne(id);
+        const warehouse = await this.warehouseRp.findOne({
+            where: { id },
+        });
+
+        if (!warehouse) {
+            throw new NotFoundException("Kho hàng không tồn tại!");
+        }
+
         await warehouse.update(dto);
         return warehouse;
     }
 
     async delete(id: number) {
-        const warehouse = await this.findOne(id);
+        const warehouse = await this.warehouseRp.findOne({
+            where: { id },
+        });
+
+        if (!warehouse) {
+            throw new NotFoundException("Kho hàng không tồn tại!");
+        }
+
         await warehouse.destroy();
     }
 } 
