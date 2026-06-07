@@ -14,135 +14,122 @@ import { CategoryModel } from "../category/model/category.model";
 
 @Injectable()
 export class WarehouseService {
-    constructor(
-        @InjectModel(WarehouseModel)
-        private readonly warehouseRp: typeof WarehouseModel,
-    ) {}
+	constructor(
+		@InjectModel(WarehouseModel)
+		private readonly warehouseRp: typeof WarehouseModel,
+	) {}
 
-  async create(dto: CreateWarehouseDto): Promise<WarehouseModel> {
-        console.log("🚀 ~ WarehouseService ~ create ~ dto:", dto)
-      
-    return await this.warehouseRp.create({
-      code: dto.code,
-      name: dto.name,
-      address: dto.address
-        });
-    }
+	async create(dto: CreateWarehouseDto): Promise<WarehouseModel> {
+		console.log("🚀 ~ WarehouseService ~ create ~ dto:", dto);
 
-    async findAll(dto: SearchWarehouseDto) {
-        const { q, code, name, from_date, to_date } = dto;
-        const whereOptions: WhereOptions = {};
-        const dateConditions = [];
+		return await this.warehouseRp.create({
+			code: dto.code,
+			name: dto.name,
+			address: dto.address,
+		});
+	}
 
-      if (q) {
+	async findAll(dto: SearchWarehouseDto) {
+		const { q, code, name, from_date, to_date } = dto;
+		const whereOptions: WhereOptions = {};
+		const dateConditions = [];
+
+		if (q) {
 			whereOptions.name = { [Op.like]: `%${q}%` };
-		  }
+		}
 
-        if (code) {
-            whereOptions.code = { [Op.like]: `%${code}%` };
-        }
+		if (code) {
+			whereOptions.code = { [Op.like]: `%${code}%` };
+		}
 
-        if (name) {
-            whereOptions.name = { [Op.like]: `%${name}%` };
-        }
+		if (name) {
+			whereOptions.name = { [Op.like]: `%${name}%` };
+		}
 
-        if (from_date) {
-            dateConditions.push({
-                [Op.gte]: moment(from_date).startOf("date").toDate(),
-            });
-        }
+		if (from_date) {
+			dateConditions.push({
+				[Op.gte]: moment(from_date).startOf("date").toDate(),
+			});
+		}
 
-        if (to_date) {
-            dateConditions.push({
-                [Op.lte]: moment(to_date).endOf("date").toDate(),
-            });
-        }
+		if (to_date) {
+			dateConditions.push({
+				[Op.lte]: moment(to_date).endOf("date").toDate(),
+			});
+		}
 
-        if (dateConditions.length > 0) {
-            whereOptions.created_at = { [Op.and]: dateConditions };
-        }
+		if (dateConditions.length > 0) {
+			whereOptions.created_at = { [Op.and]: dateConditions };
+		}
 
-        const warehouses = await this.warehouseRp.findAndCountAll({
-            where: whereOptions,
-            order: [["created_at", "DESC"]],
-            limit: dto.take,
-            offset: dto.skip,
-        });
+		const warehouses = await this.warehouseRp.findAndCountAll({
+			where: whereOptions,
+			order: [["created_at", "DESC"]],
+			limit: dto.take,
+			offset: dto.skip,
+		});
 
-        return new PageDto(
-            warehouses.rows,
-            new PageMetaDto({
-                itemCount: warehouses.count,
-                pageOptionsDto: dto,
-            }),
-        );
-    }
+		return new PageDto(
+			warehouses.rows,
+			new PageMetaDto({
+				itemCount: warehouses.count,
+				pageOptionsDto: dto,
+			}),
+		);
+	}
 
-    async findOne(id: number) {
-        const warehouse = await this.warehouseRp.findOne({
-            where: { id },
-            include: [
-                {
-                    model: WarehouseProductModel,
-                    include: [
-                        {
-                            model: ProductModel,
-                            attributes: [
-                                'id', 
-                                'name', 
-                                'price',
-                                'description',
-                                'image',
-                                'category_id'
-                            ],
-                            include: [
-                                {
-                                    model: CategoryModel,
-                                    attributes: ['id', 'name']
-                                }
-                            ]
-                        }
-                    ],
-                    attributes: [
-                        'id',
-                        'product_id',
-                        'quantity',
-                        'created_at',
-                        'updated_at'
-                    ]
-                }
-            ]
-        });
+	async findOne(id: number) {
+		const warehouse = await this.warehouseRp.findOne({
+			where: { id },
+			include: [
+				{
+					model: WarehouseProductModel,
+					include: [
+						{
+							model: ProductModel,
+							attributes: ["id", "name", "price", "description", "image", "category_id"],
+							include: [
+								{
+									model: CategoryModel,
+									attributes: ["id", "name"],
+								},
+							],
+						},
+					],
+					attributes: ["id", "product_id", "quantity"],
+				},
+			],
+		});
 
-        if (!warehouse) {
-            throw new NotFoundException("Kho hàng không tồn tại!");
-        }
+		if (!warehouse) {
+			throw new NotFoundException("Kho hàng không tồn tại!");
+		}
 
-        return warehouse;
-    }
+		return warehouse;
+	}
 
-    async update(id: number, dto: UpdateWarehouseDto) {
-        const warehouse = await this.warehouseRp.findOne({
-            where: { id },
-        });
+	async update(id: number, dto: UpdateWarehouseDto) {
+		const warehouse = await this.warehouseRp.findOne({
+			where: { id },
+		});
 
-        if (!warehouse) {
-            throw new NotFoundException("Kho hàng không tồn tại!");
-        }
+		if (!warehouse) {
+			throw new NotFoundException("Kho hàng không tồn tại!");
+		}
 
-        await warehouse.update(dto);
-        return warehouse;
-    }
+		await warehouse.update(dto);
+		return warehouse;
+	}
 
-    async delete(id: number) {
-        const warehouse = await this.warehouseRp.findOne({
-            where: { id },
-        });
+	async delete(id: number) {
+		const warehouse = await this.warehouseRp.findOne({
+			where: { id },
+		});
 
-        if (!warehouse) {
-            throw new NotFoundException("Kho hàng không tồn tại!");
-        }
+		if (!warehouse) {
+			throw new NotFoundException("Kho hàng không tồn tại!");
+		}
 
-        await warehouse.destroy();
-    }
-} 
+		await warehouse.destroy();
+	}
+}
