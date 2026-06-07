@@ -107,8 +107,8 @@ export class WarehouseService {
                         'id',
                         'product_id',
                         'quantity',
-                        'createdAt',
-                        'updatedAt'
+                        'created_at',
+                        'updated_at'
                     ]
                 }
             ]
