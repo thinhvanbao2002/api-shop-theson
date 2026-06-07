@@ -87,7 +87,7 @@ export class WarehouseService {
 					include: [
 						{
 							model: ProductModel,
-							attributes: ["id", "name", "price", "description", "image", "category_id"],
+							attributes: ["id", "name", "price", "description", "image", "category_id","product_code"],
 							include: [
 								{
 									model: CategoryModel,
