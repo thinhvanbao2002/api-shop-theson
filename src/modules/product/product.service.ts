@@ -10,6 +10,7 @@ import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { PageDto } from "src/common/dto/page.dto";
 import { ProductReviewModel } from "../product-review/model/product-review.model";
 import { UserModel } from "../user/model/user.model";
+import { WarehouseProductModel } from "../warehouse/model/warehouse-product.model";
 
 @Injectable()
 export class ProductService {
@@ -78,12 +79,21 @@ export class ProductService {
 				{ model: ProductPhotoModel },
 				{ model: CategoryModel },
 				{ model: ProductReviewModel, include: [{ model: UserModel }] },
+				{ model: WarehouseProductModel, attributes: ["id", "warehouse_id", "product_id", "quantity"] },
 			],
 		});
 
 		if (!product) {
 			throw new NotFoundException("Không tồn tại sản phẩm!");
 		}
+
+		const stockQuantity =
+			product.warehouse_products?.reduce(
+				(total, warehouseProduct) => total + Number(warehouseProduct.quantity || 0),
+				0,
+			) || 0;
+
+		product.setDataValue("stock_quantity", stockQuantity);
 
 		return product;
 	}

@@ -137,13 +137,24 @@ export class OverviewService {
 	async getStatistics(dto: GetStatisticsDto) {
 		const year = dto.year || new Date().getFullYear().toString();
 		const limit = dto.limit || 5;
+		const selectedMonth = dto.month ? dto.month.padStart(2, "0") : "";
+		const fromDate = dto.from_date || (selectedMonth ? `${year}-${selectedMonth}-01` : `${year}-01-01`);
+		const toDate =
+			dto.to_date ||
+			(selectedMonth
+				? `${year}-${selectedMonth}-${new Date(Number(year), Number(selectedMonth), 0).getDate()}`
+				: `${year}-12-31`);
+		const orderDateWhere = {
+			created_at: {
+				[Op.between]: [`${fromDate} 00:00:00`, `${toDate} 23:59:59`],
+			},
+			order_status: OrderType.PAID,
+		};
+		const isFilteredByDate = Boolean(dto.month || dto.from_date || dto.to_date);
 
 		// 1. Top best-selling products (top sản phẩm bán chạy nhất)
 		const topSellingProducts = await this.orderDetailRepository.findAll({
-			attributes: [
-				"product_id",
-				[Sequelize.fn("SUM", Sequelize.col("OrderDetailModel.quantity")), "total_sold"],
-			],
+			attributes: ["product_id", [Sequelize.fn("SUM", Sequelize.col("OrderDetailModel.quantity")), "total_sold"]],
 			include: [
 				{
 					model: OrderModel,
@@ -212,25 +223,39 @@ export class OverviewService {
 			order: [["month", "ASC"]],
 		});
 
-		const monthlyRevenue = Array(12).fill(0).map((_, i) => ({
-			month: `Tháng ${i + 1}`,
-			revenue: 0,
-		}));
+		const monthlyRevenue = Array(12)
+			.fill(0)
+			.map((_, i) => ({
+				month: `Tháng ${i + 1}`,
+				revenue: 0,
+			}));
 
 		let currentYearRevenue = 0;
 		revenues.forEach(revenue => {
 			const monthVal = revenue.get("month") as number;
 			const monthIndex = monthVal - 1;
-			const revenueAmount = parseFloat(revenue.get("revenue") as string || "0");
+			const revenueAmount = parseFloat((revenue.get("revenue") as string) || "0");
 			monthlyRevenue[monthIndex].revenue = revenueAmount;
 			currentYearRevenue += revenueAmount;
 		});
 
 		const quarterlyRevenue = [
-			{ quarter: "Quý 1", revenue: monthlyRevenue[0].revenue + monthlyRevenue[1].revenue + monthlyRevenue[2].revenue },
-			{ quarter: "Quý 2", revenue: monthlyRevenue[3].revenue + monthlyRevenue[4].revenue + monthlyRevenue[5].revenue },
-			{ quarter: "Quý 3", revenue: monthlyRevenue[6].revenue + monthlyRevenue[7].revenue + monthlyRevenue[8].revenue },
-			{ quarter: "Quý 4", revenue: monthlyRevenue[9].revenue + monthlyRevenue[10].revenue + monthlyRevenue[11].revenue },
+			{
+				quarter: "Quý 1",
+				revenue: monthlyRevenue[0].revenue + monthlyRevenue[1].revenue + monthlyRevenue[2].revenue,
+			},
+			{
+				quarter: "Quý 2",
+				revenue: monthlyRevenue[3].revenue + monthlyRevenue[4].revenue + monthlyRevenue[5].revenue,
+			},
+			{
+				quarter: "Quý 3",
+				revenue: monthlyRevenue[6].revenue + monthlyRevenue[7].revenue + monthlyRevenue[8].revenue,
+			},
+			{
+				quarter: "Quý 4",
+				revenue: monthlyRevenue[9].revenue + monthlyRevenue[10].revenue + monthlyRevenue[11].revenue,
+			},
 		];
 
 		const now = new Date();
@@ -239,6 +264,35 @@ export class OverviewService {
 
 		const currentMonthRevenue = monthlyRevenue[currentMonthIndex]?.revenue || 0;
 		const currentQuarterRevenue = quarterlyRevenue[currentQuarterIndex]?.revenue || 0;
+		const dailyRevenues = await this.orderRepository.findAll({
+			attributes: [
+				[Sequelize.fn("DATE", Sequelize.col("created_at")), "date"],
+				[Sequelize.fn("SUM", Sequelize.col("total_price")), "revenue"],
+			],
+			where: orderDateWhere,
+			group: ["date"],
+			order: [["date", "ASC"]],
+		});
+		const dailyRevenueMap = new Map<string, number>();
+		dailyRevenues.forEach(revenue => {
+			const rawDate = revenue.get("date") as string | Date;
+			const dateKey = typeof rawDate === "string" ? rawDate.slice(0, 10) : rawDate.toISOString().slice(0, 10);
+
+			dailyRevenueMap.set(dateKey, parseFloat((revenue.get("revenue") as string) || "0"));
+		});
+
+		const byDay = [];
+		const start = new Date(`${fromDate}T00:00:00`);
+		const end = new Date(`${toDate}T00:00:00`);
+		for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+			const dateKey = date.toISOString().slice(0, 10);
+			byDay.push({
+				day: `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
+				date: dateKey,
+				revenue: dailyRevenueMap.get(dateKey) || 0,
+			});
+		}
+		const currentPeriodRevenue = byDay.reduce((total, item) => total + item.revenue, 0);
 
 		return {
 			topSellingProducts,
@@ -247,11 +301,18 @@ export class OverviewService {
 			revenue: {
 				year,
 				byMonth: monthlyRevenue,
+				byDay: isFilteredByDate ? byDay : [],
 				byQuarter: quarterlyRevenue,
 				currentMonth: currentMonthRevenue,
 				currentQuarter: currentQuarterRevenue,
 				currentYear: currentYearRevenue,
-			}
+				currentPeriod: currentPeriodRevenue,
+				filter: {
+					from_date: fromDate,
+					to_date: toDate,
+					month: selectedMonth || null,
+				},
+			},
 		};
 	}
 

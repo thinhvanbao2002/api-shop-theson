@@ -4,6 +4,7 @@ import { UpdateProductDto } from "../dto/update-product.dto";
 import { InjectModel } from "@nestjs/sequelize";
 import { ProductModel } from "../model/product.model";
 import { ProductPhotoModel } from "src/modules/product-photo/model/product-photo.model";
+import { WarehouseProductModel } from "src/modules/warehouse/model/warehouse-product.model";
 import { CategoryModel } from "src/modules/category/model/category.model";
 import { SearchProductDto } from "../dto/search-product.dto";
 import { Sequelize, WhereOptions } from "sequelize";
@@ -124,11 +125,25 @@ export class ProductAdminService {
 
 		const products = await this.productRepository.findAndCountAll({
 			where: whereOptions,
-			include: [{ model: CategoryModel }, { model: ProductPhotoModel }],
+			include: [
+				{ model: CategoryModel },
+				{ model: ProductPhotoModel },
+				{ model: WarehouseProductModel, attributes: ["id", "warehouse_id", "product_id", "quantity"] },
+			],
 			order: orderConditions,
 			distinct: true,
 			limit: dto.take,
 			offset: dto.skip,
+		});
+
+		products.rows.forEach(product => {
+			const stockQuantity =
+				product.warehouse_products?.reduce(
+					(total, warehouseProduct) => total + Number(warehouseProduct.quantity || 0),
+					0,
+				) || 0;
+
+			product.setDataValue("stock_quantity", stockQuantity);
 		});
 
 		return new PageDto(products.rows, new PageMetaDto({ itemCount: products.count, pageOptionsDto: dto }));
@@ -148,7 +163,7 @@ export class ProductAdminService {
 	}
 
 	async update(productId: number, updateProductDto: UpdateProductDto) {
-		const { product_photo } = updateProductDto;
+		const { product_photo, ...productPayload } = updateProductDto;
 		console.log("🚀 ~ ProductAdminService ~ update ~ product_photo:", product_photo);
 
 		const foundProduct = await this.productRepository.findOne({
@@ -163,7 +178,7 @@ export class ProductAdminService {
 		await this.productRepository.sequelize.transaction(async transaction => {
 			await this.productRepository.update(
 				{
-					...updateProductDto,
+					...productPayload,
 				},
 				{
 					where: { id: productId },
@@ -243,7 +258,11 @@ export class ProductAdminService {
 					price: product.price,
 					status: convertStatus(product.status),
 					category: product.category.name,
-					quantity: product.quantity,
+					quantity:
+						product.warehouse_products?.reduce(
+							(total, warehouseProduct) => total + Number(warehouseProduct.quantity || 0),
+							0,
+						) || 0,
 				};
 
 				worksheet.addRow(row);
