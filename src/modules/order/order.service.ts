@@ -52,9 +52,9 @@ export class OrderService implements OnModuleInit {
 	}
 
 	async create(createOrderDto: CreateOrderDto, req: any) {
-		const { total_price, items, name, phone, address, note, city, district, ward, payment_method, pay_type } = createOrderDto;
+		const { total_price, items, name, phone, email, address, note, city, district, ward, payment_method, pay_type } = createOrderDto;
 		const customerId = req?.user?.id;
-		const customerEmail = req?.user?.email;
+		const customerEmail = email || req?.user?.email;
 
 		await this.orderRp.sequelize.transaction(async transaction => {
 			const order = await this.orderRp.create(
@@ -141,12 +141,19 @@ export class OrderService implements OnModuleInit {
 			try {
 				const emailData = {
 					customerName: completeOrder.name,
+					customerEmail,
 					orderCode: completeOrder.id,
 					createdAt: completeOrder.created_at,
 					totalAmount: completeOrder.total_price,
 					status: completeOrder.order_status,
 					address: completeOrder.address,
 					phone: completeOrder.phone,
+					note: completeOrder.note,
+					city: completeOrder.city,
+					district: completeOrder.district,
+					ward: completeOrder.ward,
+					paymentMethod: completeOrder.payment_method,
+					payType: completeOrder.pay_type,
 					orderDetails: completeOrder.order_details,
 				  };
 				await this.emailService.sendOrderConfirmation(customerEmail, emailData);

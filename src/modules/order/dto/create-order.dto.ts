@@ -12,6 +12,9 @@ export class CreateOrderDto {
 	phone?: string;
 
 	@StringFieldOptional()
+	email?: string;
+
+	@StringFieldOptional()
 	address?: string;
 
 	@StringFieldOptional()
