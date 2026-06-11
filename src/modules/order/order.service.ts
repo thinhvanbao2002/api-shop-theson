@@ -91,7 +91,14 @@ export class OrderService implements OnModuleInit {
 					await this.orderDetailRp.bulkCreate(payloadOrderItems, { transaction });
 
 					for (const item of payloadOrderItems) {
-						const findProduct = await this.productRepository.findByPk(item.product_id);
+						const findProduct = await this.productRepository.findByPk(item.product_id, {
+							transaction,
+							lock: transaction.LOCK.UPDATE,
+						});
+
+						if (!findProduct) {
+							throw new NotFoundException("San pham khong ton tai!");
+						}
 
 						findProduct.quantity -= Number(item.product_number);
 
@@ -100,7 +107,8 @@ export class OrderService implements OnModuleInit {
 						try {
 							const deductedWarehouses = await this.warehouseProductService.deductStock(
 								item.product_id,
-								Number(item.quantity)
+								Number(item.quantity),
+								transaction
 							);
 
 							// Lưu log trừ tồn kho (tùy chọn)

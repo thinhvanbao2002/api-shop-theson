@@ -4,7 +4,7 @@ import { WarehouseProductModel } from "./model/warehouse-product.model";
 import { CreateWarehouseProductDto } from "./dto/create-warehouse-product.dto";
 import { WarehouseModel } from "./model/warehouse.model";
 import { ProductModel } from "src/modules/product/model/product.model";
-import { Op } from "sequelize";
+import { Op, Transaction } from "sequelize";
 
 @Injectable()
 export class WarehouseProductService {
@@ -106,7 +106,7 @@ export class WarehouseProductService {
         return warehouseProducts;
     }
 
-    async deductStock(product_id: number, quantity: number) {
+    async deductStock(product_id: number, quantity: number, transaction?: Transaction) {
         // Lấy tất cả kho có sản phẩm này, sắp xếp theo số lượng giảm dần
         const warehouseProducts = await this.warehouseProductRp.findAll({
             where: { 
@@ -114,6 +114,8 @@ export class WarehouseProductService {
                 quantity: { [Op.gt]: 0 } // Chỉ lấy những kho có số lượng > 0
             },
             order: [['quantity', 'DESC']],
+            transaction,
+            lock: transaction ? transaction.LOCK.UPDATE : undefined,
             include: [
                 {
                     model: WarehouseModel,
@@ -126,6 +128,11 @@ export class WarehouseProductService {
             throw new BadRequestException(`Sản phẩm không còn tồn kho!`);
         }
 
+        const totalStock = warehouseProducts.reduce((total, wp) => total + Number(wp.quantity || 0), 0);
+        if (totalStock < quantity) {
+            throw new BadRequestException(`Không đủ số lượng tồn kho cho sản phẩm!`);
+        }
+
         let remainingQuantity = quantity;
         const deductedWarehouses = [];
 
@@ -136,7 +143,7 @@ export class WarehouseProductService {
             const deductAmount = Math.min(wp.quantity, remainingQuantity);
             const newQuantity = wp.quantity - deductAmount;
             
-            await wp.update({ quantity: newQuantity });
+            await wp.update({ quantity: newQuantity }, { transaction });
             deductedWarehouses.push({
                 warehouse_id: wp.warehouse_id,
                 warehouse_name: wp.warehouse.name,

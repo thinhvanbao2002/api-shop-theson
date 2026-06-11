@@ -11,6 +11,7 @@ import { PageDto } from "src/common/dto/page.dto";
 import { ProductReviewModel } from "../product-review/model/product-review.model";
 import { UserModel } from "../user/model/user.model";
 import { WarehouseProductModel } from "../warehouse/model/warehouse-product.model";
+import { ProductStatus } from "./constants/product.constant";
 
 @Injectable()
 export class ProductService {
@@ -21,8 +22,8 @@ export class ProductService {
 	) {}
 
 	async findAll(dto: SearchProductDto) {
-		const { product_type, q, status, from_date, to_date, brand, price_range } = dto;
-		const whereOptions: WhereOptions = {};
+		const { product_type, q, from_date, to_date, brand, price_range } = dto;
+		const whereOptions: WhereOptions = { status: ProductStatus.ACTIVE };
 		const dateConditions = [];
 		const priceRangeConditions = [];
 
@@ -32,10 +33,6 @@ export class ProductService {
 
 		if (product_type) {
 			whereOptions.product_type = { [Op.eq]: product_type };
-		}
-
-		if (status !== undefined) {
-			whereOptions.status = { [Op.eq]: status };
 		}
 
 		if (brand) {
@@ -104,6 +101,7 @@ export class ProductService {
 
 	async findBestSeller() {
 		const products = await this.productRepository.findAll({
+			where: { status: ProductStatus.ACTIVE },
 			limit: 4,
 			offset: 1,
 		});
