@@ -4,6 +4,7 @@ import { UpdateBlogDto } from "./dto/update-blog.dto";
 import { BlogModel } from "./model/blog.model";
 import { InjectModel } from "@nestjs/sequelize";
 import { UserModel } from "../user/model/user.model";
+import { CommonStatus } from "src/common/constants";
 
 @Injectable()
 export class BlogService {
@@ -18,6 +19,7 @@ export class BlogService {
 
 	async findAll() {
 		const blogs = await this.blogRepository.findAll({
+			where: { status: CommonStatus.ACTIVE },
 			include: [{ model: UserModel }],
 		});
 		return blogs;
@@ -25,7 +27,7 @@ export class BlogService {
 
 	async findOne(id: string) {
 		const blog = await this.blogRepository.findOne({
-			where: { id },
+			where: { id, status: CommonStatus.ACTIVE },
 			include: [{ model: UserModel }],
 		});
 		return blog;

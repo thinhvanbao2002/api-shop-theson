@@ -21,8 +21,8 @@ export class OverviewController {
 	@Get()
 	@Roles(UserRoles.ADMIN)
 	@UseGuards(JwtAuthGuard, RolesGuard)
-	async findDataWebShop() {
-		return await this.overviewService.findAll();
+	async findDataWebShop(@Query() dto: GetStatisticsDto) {
+		return await this.overviewService.findAll(dto);
 	}
 
 	@Get("statistics")

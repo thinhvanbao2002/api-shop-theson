@@ -12,6 +12,7 @@ import { ProductReviewModel } from "../product-review/model/product-review.model
 import { UserModel } from "../user/model/user.model";
 import { WarehouseProductModel } from "../warehouse/model/warehouse-product.model";
 import { ProductStatus } from "./constants/product.constant";
+import { CategoryStatus } from "../category/constants/category.contant";
 
 @Injectable()
 export class ProductService {
@@ -60,7 +61,7 @@ export class ProductService {
 
 		const products = await this.productRepository.findAndCountAll({
 			where: whereOptions,
-			include: [{ model: CategoryModel }],
+			include: [{ model: CategoryModel, where: { status: CategoryStatus.ACTIVE } }],
 			order: [["created_at", "DESC"]],
 			limit: dto.take,
 			offset: dto.skip,
@@ -74,7 +75,7 @@ export class ProductService {
 			where: { id: id },
 			include: [
 				{ model: ProductPhotoModel },
-				{ model: CategoryModel },
+				{ model: CategoryModel, where: { status: CategoryStatus.ACTIVE } },
 				{ model: ProductReviewModel, include: [{ model: UserModel }] },
 				{ model: WarehouseProductModel, attributes: ["id", "warehouse_id", "product_id", "quantity"] },
 			],

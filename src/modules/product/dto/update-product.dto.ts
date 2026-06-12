@@ -34,7 +34,7 @@ export class UpdateProductDto {
 	@ApiProperty()
 	product_photo: CreateProductPhotoDto[];
 
-	@StringFieldOptional()
+	@StringFieldOptional({ trim: false })
 	description?: string;
 
 	@StringField()

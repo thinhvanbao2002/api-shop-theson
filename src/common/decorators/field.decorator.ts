@@ -53,6 +53,7 @@ interface IStringFieldOptions {
 	maxLength?: number;
 	toLowerCase?: boolean;
 	toUpperCase?: boolean;
+	trim?: boolean;
 	swagger?: boolean;
 	notEmpty?: boolean;
 }
@@ -151,7 +152,12 @@ export function NumberFieldOptional(
 }
 
 export function StringField(options: Omit<ApiPropertyOptions, "type"> & IStringFieldOptions = {}): PropertyDecorator {
-	const decorators = [IsString(), Trim()];
+	const decorators = [IsString()];
+	const { trim: shouldTrim = true, ...apiPropertyOptions } = options;
+
+	if (shouldTrim) {
+		decorators.push(Trim());
+	}
 
 	if (options.notEmpty) {
 		decorators.push(IsNotEmpty());
@@ -159,7 +165,7 @@ export function StringField(options: Omit<ApiPropertyOptions, "type"> & IStringF
 
 	const isArray = options.isArray;
 	if (options.swagger !== false) {
-		decorators.push(ApiProperty({ type: isArray ? [String] : String, ...options }));
+		decorators.push(ApiProperty({ type: isArray ? [String] : String, ...apiPropertyOptions }));
 	}
 
 	if (options.isArray) {

@@ -31,12 +31,12 @@ export class CreateProductDto {
 	@ApiProperty()
 	product_photo: CreateProductPhotoDto[];
 
-	@StringFieldOptional()
+	@StringFieldOptional({ trim: false })
 	description?: string;
 
 	@StringField()
 	image: string;
 
-	@StringFieldOptional()
+	@StringFieldOptional({ trim: false })
 	introduce: string;
 }

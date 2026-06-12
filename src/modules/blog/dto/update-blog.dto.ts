@@ -9,4 +9,7 @@ export class UpdateBlogDto {
 
 	@StringFieldOptional()
 	content?: string;
+
+	@StringFieldOptional()
+	status?: string;
 }

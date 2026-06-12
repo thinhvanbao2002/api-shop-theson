@@ -9,6 +9,7 @@ import { WhereOptions } from "sequelize";
 import { Op } from "sequelize";
 import { PageMetaDto } from "src/common/dto/page-meta.dto";
 import { PageDto } from "src/common/dto/page.dto";
+import { CategoryStatus } from "./constants/category.contant";
 
 @Injectable()
 export class CategoryService {
@@ -41,7 +42,7 @@ export class CategoryService {
 	async findAll(dto: SearchCategoryDto) {
 		const { q, take, skip } = dto;
 		console.log("🚀 ~ CategoryService ~ findAll ~ dto:", dto);
-		const whereOptions: WhereOptions = {};
+		const whereOptions: WhereOptions = { status: CategoryStatus.ACTIVE };
 
 		if (q) {
 			whereOptions.name = { [Op.like]: `%${q}%` };

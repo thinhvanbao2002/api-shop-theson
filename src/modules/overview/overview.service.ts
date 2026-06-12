@@ -29,13 +29,27 @@ export class OverviewService {
 		return "This action adds a new overview";
 	}
 
-	async findAll() {
-		const countOrders = await this.orderRepository.count();
+	private buildCreatedAtWhere(fromDate?: string, toDate?: string) {
+		if (!fromDate && !toDate) {
+			return {};
+		}
+
+		return {
+			created_at: {
+				...(fromDate ? { [Op.gte]: `${fromDate} 00:00:00` } : {}),
+				...(toDate ? { [Op.lte]: `${toDate} 23:59:59` } : {}),
+			},
+		};
+	}
+
+	async findAll(dto?: GetStatisticsDto) {
+		const dateWhere = this.buildCreatedAtWhere(dto?.from_date, dto?.to_date);
+		const countOrders = await this.orderRepository.count({ where: dateWhere });
 		const countUsers = await this.userRepository.count({
-			where: { role: UserRoles.CUSTOMER },
+			where: { role: UserRoles.CUSTOMER, ...dateWhere },
 		});
-		const countProducts = await this.productRepository.count();
-		const countCategories = await this.categoryRepository.count();
+		const countProducts = await this.productRepository.count({ where: dateWhere });
+		const countCategories = await this.categoryRepository.count({ where: dateWhere });
 
 		return {
 			countOrders,
@@ -158,7 +172,7 @@ export class OverviewService {
 			include: [
 				{
 					model: OrderModel,
-					where: { order_status: OrderType.PAID },
+					where: orderDateWhere,
 					attributes: [],
 				},
 				{
@@ -178,7 +192,7 @@ export class OverviewService {
 				[Sequelize.fn("SUM", Sequelize.col("total_price")), "total_spent"],
 				[Sequelize.fn("COUNT", Sequelize.col("OrderModel.id")), "total_orders"],
 			],
-			where: { order_status: OrderType.PAID },
+			where: orderDateWhere,
 			include: [
 				{
 					model: UserModel,
@@ -202,6 +216,7 @@ export class OverviewService {
 					attributes: ["name", "price", "image"],
 				},
 			],
+			where: this.buildCreatedAtWhere(fromDate, toDate),
 			group: ["product_id", "product.id"],
 			order: [[Sequelize.literal("total_reviews"), "DESC"]],
 			limit: limit,
