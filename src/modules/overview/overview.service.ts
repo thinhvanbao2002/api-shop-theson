@@ -52,8 +52,9 @@ export class OverviewService {
 		return {
 			input_from_date: fromDate || null,
 			input_to_date: toDate || null,
-			db_from_datetime: fromDate ? this.toLocalDbDateTime(fromDate, "start") : null,
-			db_to_datetime: toDate ? this.toLocalDbDateTime(toDate, "end") : null,
+			report_date_from: fromDate || null,
+			report_date_to: toDate || null,
+			report_date_sql: "DATE_FORMAT(CONVERT_TZ(created_at, '+00:00', '+07:00'), '%Y-%m-%d')",
 		};
 	}
 
@@ -83,6 +84,21 @@ export class OverviewService {
 		};
 	}
 
+	private buildReportDateWhere(fromDate?: string, toDate?: string) {
+		if (!fromDate && !toDate) {
+			return {};
+		}
+
+		return {
+			[Op.and]: [
+				Sequelize.where(this.getReportDateExpression(), {
+					...(fromDate ? { [Op.gte]: fromDate } : {}),
+					...(toDate ? { [Op.lte]: toDate } : {}),
+				}),
+			],
+		};
+	}
+
 	private getReportDateExpression() {
 		return Sequelize.fn(
 			"DATE_FORMAT",
@@ -106,7 +122,7 @@ export class OverviewService {
 	}
 
 	async findAll(dto?: GetStatisticsDto) {
-		const dateWhere = this.buildLocalCreatedAtWhere(dto?.from_date, dto?.to_date);
+		const dateWhere = this.buildReportDateWhere(dto?.from_date, dto?.to_date);
 		const countOrders = await this.orderRepository.count({ where: dateWhere });
 		const paidCountOrders = await this.orderRepository.count({
 			where: { ...dateWhere, order_status: OrderType.PAID },
