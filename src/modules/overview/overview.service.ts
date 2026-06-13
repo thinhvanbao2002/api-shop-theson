@@ -14,6 +14,11 @@ import { UserRoles } from "../user/types/user.type";
 import { OrderDetailModel } from "../order-detail/model/order-detail.model";
 import { ProductReviewModel } from "../product-review/model/product-review.model";
 import { GetStatisticsDto } from "./dto/get-statistics.dto";
+import * as moment from "moment-timezone";
+
+const REPORT_TIMEZONE = "Asia/Ho_Chi_Minh";
+const DB_TIMEZONE_OFFSET = "+00:00";
+const REPORT_TIMEZONE_OFFSET = "+07:00";
 
 @Injectable()
 export class OverviewService {
@@ -29,6 +34,23 @@ export class OverviewService {
 		return "This action adds a new overview";
 	}
 
+	private toDbDateTime(date: string, boundary: "start" | "end") {
+		const localDate = moment.tz(date, "YYYY-MM-DD", REPORT_TIMEZONE);
+		const dateTime = boundary === "start" ? localDate.startOf("day") : localDate.endOf("day");
+
+		return dateTime.utc().format("YYYY-MM-DD HH:mm:ss");
+	}
+
+	private getDebugDateRange(fromDate?: string, toDate?: string) {
+		return {
+			input_from_date: fromDate || null,
+			input_to_date: toDate || null,
+			db_from_datetime: fromDate ? this.toDbDateTime(fromDate, "start") : null,
+			db_to_datetime: toDate ? this.toDbDateTime(toDate, "end") : null,
+			report_timezone: REPORT_TIMEZONE,
+		};
+	}
+
 	private buildCreatedAtWhere(fromDate?: string, toDate?: string) {
 		if (!fromDate && !toDate) {
 			return {};
@@ -36,23 +58,78 @@ export class OverviewService {
 
 		return {
 			created_at: {
-				...(fromDate ? { [Op.gte]: `${fromDate} 00:00:00` } : {}),
-				...(toDate ? { [Op.lte]: `${toDate} 23:59:59` } : {}),
+				...(fromDate ? { [Op.gte]: this.toDbDateTime(fromDate, "start") } : {}),
+				...(toDate ? { [Op.lte]: this.toDbDateTime(toDate, "end") } : {}),
 			},
 		};
 	}
 
-	private formatDateKey(date: Date) {
-		const year = date.getFullYear();
-		const month = String(date.getMonth() + 1).padStart(2, "0");
-		const day = String(date.getDate()).padStart(2, "0");
+	private getReportDateExpression() {
+		return Sequelize.fn(
+			"DATE_FORMAT",
+			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+			"%Y-%m-%d",
+		);
+	}
 
-		return `${year}-${month}-${day}`;
+	private getReportMonthExpression() {
+		return Sequelize.fn(
+			"MONTH",
+			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+		);
+	}
+
+	private getReportDayExpression() {
+		return Sequelize.fn(
+			"DAY",
+			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+		);
 	}
 
 	async findAll(dto?: GetStatisticsDto) {
 		const dateWhere = this.buildCreatedAtWhere(dto?.from_date, dto?.to_date);
 		const countOrders = await this.orderRepository.count({ where: dateWhere });
+		const paidCountOrders = await this.orderRepository.count({
+			where: { ...dateWhere, order_status: OrderType.PAID },
+		});
+		const debugOrders = await this.orderRepository.findAll({
+			attributes: [
+				"id",
+				"order_status",
+				"pay_type",
+				"total_price",
+				"created_at",
+				[Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d %H:%i:%s"), "db_time"],
+				[Sequelize.fn("DATE_FORMAT", this.getReportDateExpression(), "%Y-%m-%d"), "report_date"],
+				[
+					Sequelize.fn(
+						"DATE_FORMAT",
+						Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+						"%Y-%m-%d %H:%i:%s",
+					),
+					"report_time",
+				],
+			],
+			where: dateWhere,
+			order: [["created_at", "ASC"]],
+		});
+
+		console.log("🚀 ~ OverviewService ~ findAll ~ dashboard order debug:", {
+			filter: this.getDebugDateRange(dto?.from_date, dto?.to_date),
+			count_all_statuses: countOrders,
+			count_paid_only: paidCountOrders,
+			orders: debugOrders.map(order => ({
+				id: order.get("id"),
+				order_status: order.get("order_status"),
+				pay_type: order.get("pay_type"),
+				total_price: order.get("total_price"),
+				created_at: order.get("created_at"),
+				db_time: order.get("db_time"),
+				report_date: order.get("report_date"),
+				report_time: order.get("report_time"),
+			})),
+		});
+
 		const countUsers = await this.userRepository.count({
 			where: { role: UserRoles.CUSTOMER, ...dateWhere },
 		});
@@ -82,13 +159,11 @@ export class OverviewService {
 	async getRevenueByYear(year: string) {
 		const revenues = await this.orderRepository.findAll({
 			attributes: [
-				[Sequelize.fn("MONTH", Sequelize.col("created_at")), "month"],
+				[this.getReportMonthExpression(), "month"],
 				[Sequelize.fn("SUM", Sequelize.col("total_price")), "revenue"],
 			],
 			where: {
-				created_at: {
-					[Op.between]: [`${year}-01-01`, `${year}-12-31`],
-				},
+				...this.buildCreatedAtWhere(`${year}-01-01`, `${year}-12-31`),
 				order_status: OrderType.PAID,
 			},
 			group: ["month"],
@@ -131,13 +206,14 @@ export class OverviewService {
 
 		const revenues = await this.orderRepository.findAll({
 			attributes: [
-				[Sequelize.fn("DAY", Sequelize.col("created_at")), "day"],
+				[this.getReportDayExpression(), "day"],
 				[Sequelize.fn("SUM", Sequelize.col("total_price")), "revenue"],
 			],
 			where: {
-				created_at: {
-					[Op.between]: [`${year}-${month}-01`, `${year}-${month}-31`],
-				},
+				...this.buildCreatedAtWhere(
+					`${year}-${month}-01`,
+					`${year}-${month}-${new Date(parseInt(year), parseInt(month), 0).getDate()}`,
+				),
 				order_status: OrderType.PAID,
 			},
 			group: ["day"],
@@ -167,9 +243,7 @@ export class OverviewService {
 				? `${year}-${selectedMonth}-${new Date(Number(year), Number(selectedMonth), 0).getDate()}`
 				: `${year}-12-31`);
 		const orderDateWhere = {
-			created_at: {
-				[Op.between]: [`${fromDate} 00:00:00`, `${toDate} 23:59:59`],
-			},
+			...this.buildCreatedAtWhere(fromDate, toDate),
 			order_status: OrderType.PAID,
 		};
 		const isFilteredByDate = Boolean(dto.month || dto.from_date || dto.to_date);
@@ -233,13 +307,11 @@ export class OverviewService {
 		// 4. Revenue of month, year, quarter
 		const revenues = await this.orderRepository.findAll({
 			attributes: [
-				[Sequelize.fn("MONTH", Sequelize.col("created_at")), "month"],
+				[this.getReportMonthExpression(), "month"],
 				[Sequelize.fn("SUM", Sequelize.col("total_price")), "revenue"],
 			],
 			where: {
-				created_at: {
-					[Op.between]: [`${year}-01-01`, `${year}-12-31`],
-				},
+				...this.buildCreatedAtWhere(`${year}-01-01`, `${year}-12-31`),
 				order_status: OrderType.PAID,
 			},
 			group: ["month"],
@@ -289,7 +361,7 @@ export class OverviewService {
 		const currentQuarterRevenue = quarterlyRevenue[currentQuarterIndex]?.revenue || 0;
 		const dailyRevenues = await this.orderRepository.findAll({
 			attributes: [
-				[Sequelize.fn("DATE", Sequelize.col("created_at")), "date"],
+				[this.getReportDateExpression(), "date"],
 				[Sequelize.fn("SUM", Sequelize.col("total_price")), "revenue"],
 			],
 			where: orderDateWhere,
@@ -298,19 +370,18 @@ export class OverviewService {
 		});
 		const dailyRevenueMap = new Map<string, number>();
 		dailyRevenues.forEach(revenue => {
-			const rawDate = revenue.get("date") as string | Date;
-			const dateKey = typeof rawDate === "string" ? rawDate.slice(0, 10) : this.formatDateKey(rawDate);
+			const dateKey = String(revenue.get("date")).slice(0, 10);
 
 			dailyRevenueMap.set(dateKey, parseFloat((revenue.get("revenue") as string) || "0"));
 		});
 
 		const byDay = [];
-		const start = new Date(`${fromDate}T00:00:00`);
-		const end = new Date(`${toDate}T00:00:00`);
-		for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-			const dateKey = this.formatDateKey(date);
+		const start = moment.tz(fromDate, "YYYY-MM-DD", REPORT_TIMEZONE);
+		const end = moment.tz(toDate, "YYYY-MM-DD", REPORT_TIMEZONE);
+		for (const date = start.clone(); date.isSameOrBefore(end, "day"); date.add(1, "day")) {
+			const dateKey = date.format("YYYY-MM-DD");
 			byDay.push({
-				day: `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
+				day: date.format("DD/MM"),
 				date: dateKey,
 				revenue: dailyRevenueMap.get(dateKey) || 0,
 			});
