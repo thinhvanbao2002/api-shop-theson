@@ -14,7 +14,11 @@ import { UserRoles } from "../user/types/user.type";
 import { OrderDetailModel } from "../order-detail/model/order-detail.model";
 import { ProductReviewModel } from "../product-review/model/product-review.model";
 import { GetStatisticsDto } from "./dto/get-statistics.dto";
-import * as moment from "moment";
+import * as moment from "moment-timezone";
+
+const REPORT_TIMEZONE = "Asia/Ho_Chi_Minh";
+const DB_TIMEZONE_OFFSET = "+00:00";
+const REPORT_TIMEZONE_OFFSET = "+07:00";
 
 @Injectable()
 export class OverviewService {
@@ -31,6 +35,13 @@ export class OverviewService {
 	}
 
 	private toDbDateTime(date: string, boundary: "start" | "end") {
+		const localDate = moment.tz(date, "YYYY-MM-DD", REPORT_TIMEZONE);
+		const dateTime = boundary === "start" ? localDate.startOf("day") : localDate.endOf("day");
+
+		return dateTime.utc().format("YYYY-MM-DD HH:mm:ss");
+	}
+
+	private toLocalDbDateTime(date: string, boundary: "start" | "end") {
 		const localDate = moment(date, "YYYY-MM-DD");
 		const dateTime = boundary === "start" ? localDate.startOf("day") : localDate.endOf("day");
 
@@ -41,8 +52,8 @@ export class OverviewService {
 		return {
 			input_from_date: fromDate || null,
 			input_to_date: toDate || null,
-			db_from_datetime: fromDate ? this.toDbDateTime(fromDate, "start") : null,
-			db_to_datetime: toDate ? this.toDbDateTime(toDate, "end") : null,
+			db_from_datetime: fromDate ? this.toLocalDbDateTime(fromDate, "start") : null,
+			db_to_datetime: toDate ? this.toLocalDbDateTime(toDate, "end") : null,
 		};
 	}
 
@@ -59,20 +70,43 @@ export class OverviewService {
 		};
 	}
 
+	private buildLocalCreatedAtWhere(fromDate?: string, toDate?: string) {
+		if (!fromDate && !toDate) {
+			return {};
+		}
+
+		return {
+			created_at: {
+				...(fromDate ? { [Op.gte]: this.toLocalDbDateTime(fromDate, "start") } : {}),
+				...(toDate ? { [Op.lte]: this.toLocalDbDateTime(toDate, "end") } : {}),
+			},
+		};
+	}
+
 	private getReportDateExpression() {
-		return Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d");
+		return Sequelize.fn(
+			"DATE_FORMAT",
+			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+			"%Y-%m-%d",
+		);
 	}
 
 	private getReportMonthExpression() {
-		return Sequelize.fn("MONTH", Sequelize.col("created_at"));
+		return Sequelize.fn(
+			"MONTH",
+			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+		);
 	}
 
 	private getReportDayExpression() {
-		return Sequelize.fn("DAY", Sequelize.col("created_at"));
+		return Sequelize.fn(
+			"DAY",
+			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+		);
 	}
 
 	async findAll(dto?: GetStatisticsDto) {
-		const dateWhere = this.buildCreatedAtWhere(dto?.from_date, dto?.to_date);
+		const dateWhere = this.buildLocalCreatedAtWhere(dto?.from_date, dto?.to_date);
 		const countOrders = await this.orderRepository.count({ where: dateWhere });
 		const paidCountOrders = await this.orderRepository.count({
 			where: { ...dateWhere, order_status: OrderType.PAID },
@@ -86,7 +120,14 @@ export class OverviewService {
 				"created_at",
 				[Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d %H:%i:%s"), "db_time"],
 				[this.getReportDateExpression(), "report_date"],
-				[Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d %H:%i:%s"), "report_time"],
+				[
+					Sequelize.fn(
+						"DATE_FORMAT",
+						Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
+						"%Y-%m-%d %H:%i:%s",
+					),
+					"report_time",
+				],
 			],
 			where: dateWhere,
 			order: [["created_at", "ASC"]],
@@ -354,8 +395,8 @@ export class OverviewService {
 		});
 
 		const byDay = [];
-		const start = moment(fromDate, "YYYY-MM-DD");
-		const end = moment(toDate, "YYYY-MM-DD");
+		const start = moment.tz(fromDate, "YYYY-MM-DD", REPORT_TIMEZONE);
+		const end = moment.tz(toDate, "YYYY-MM-DD", REPORT_TIMEZONE);
 		for (const date = start.clone(); date.isSameOrBefore(end, "day"); date.add(1, "day")) {
 			const dateKey = date.format("YYYY-MM-DD");
 			byDay.push({
