@@ -42,6 +42,14 @@ export class OverviewService {
 		};
 	}
 
+	private formatDateKey(date: Date) {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, "0");
+		const day = String(date.getDate()).padStart(2, "0");
+
+		return `${year}-${month}-${day}`;
+	}
+
 	async findAll(dto?: GetStatisticsDto) {
 		const dateWhere = this.buildCreatedAtWhere(dto?.from_date, dto?.to_date);
 		const countOrders = await this.orderRepository.count({ where: dateWhere });
@@ -291,7 +299,7 @@ export class OverviewService {
 		const dailyRevenueMap = new Map<string, number>();
 		dailyRevenues.forEach(revenue => {
 			const rawDate = revenue.get("date") as string | Date;
-			const dateKey = typeof rawDate === "string" ? rawDate.slice(0, 10) : rawDate.toISOString().slice(0, 10);
+			const dateKey = typeof rawDate === "string" ? rawDate.slice(0, 10) : this.formatDateKey(rawDate);
 
 			dailyRevenueMap.set(dateKey, parseFloat((revenue.get("revenue") as string) || "0"));
 		});
@@ -300,7 +308,7 @@ export class OverviewService {
 		const start = new Date(`${fromDate}T00:00:00`);
 		const end = new Date(`${toDate}T00:00:00`);
 		for (const date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-			const dateKey = date.toISOString().slice(0, 10);
+			const dateKey = this.formatDateKey(date);
 			byDay.push({
 				day: `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}`,
 				date: dateKey,
