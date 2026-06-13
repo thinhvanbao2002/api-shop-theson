@@ -14,11 +14,7 @@ import { UserRoles } from "../user/types/user.type";
 import { OrderDetailModel } from "../order-detail/model/order-detail.model";
 import { ProductReviewModel } from "../product-review/model/product-review.model";
 import { GetStatisticsDto } from "./dto/get-statistics.dto";
-import * as moment from "moment-timezone";
-
-const REPORT_TIMEZONE = "Asia/Ho_Chi_Minh";
-const DB_TIMEZONE_OFFSET = "+00:00";
-const REPORT_TIMEZONE_OFFSET = "+07:00";
+import * as moment from "moment";
 
 @Injectable()
 export class OverviewService {
@@ -35,10 +31,10 @@ export class OverviewService {
 	}
 
 	private toDbDateTime(date: string, boundary: "start" | "end") {
-		const localDate = moment.tz(date, "YYYY-MM-DD", REPORT_TIMEZONE);
+		const localDate = moment(date, "YYYY-MM-DD");
 		const dateTime = boundary === "start" ? localDate.startOf("day") : localDate.endOf("day");
 
-		return dateTime.utc().format("YYYY-MM-DD HH:mm:ss");
+		return dateTime.format("YYYY-MM-DD HH:mm:ss");
 	}
 
 	private getDebugDateRange(fromDate?: string, toDate?: string) {
@@ -47,7 +43,6 @@ export class OverviewService {
 			input_to_date: toDate || null,
 			db_from_datetime: fromDate ? this.toDbDateTime(fromDate, "start") : null,
 			db_to_datetime: toDate ? this.toDbDateTime(toDate, "end") : null,
-			report_timezone: REPORT_TIMEZONE,
 		};
 	}
 
@@ -65,25 +60,15 @@ export class OverviewService {
 	}
 
 	private getReportDateExpression() {
-		return Sequelize.fn(
-			"DATE_FORMAT",
-			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
-			"%Y-%m-%d",
-		);
+		return Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d");
 	}
 
 	private getReportMonthExpression() {
-		return Sequelize.fn(
-			"MONTH",
-			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
-		);
+		return Sequelize.fn("MONTH", Sequelize.col("created_at"));
 	}
 
 	private getReportDayExpression() {
-		return Sequelize.fn(
-			"DAY",
-			Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
-		);
+		return Sequelize.fn("DAY", Sequelize.col("created_at"));
 	}
 
 	async findAll(dto?: GetStatisticsDto) {
@@ -100,15 +85,8 @@ export class OverviewService {
 				"total_price",
 				"created_at",
 				[Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d %H:%i:%s"), "db_time"],
-				[Sequelize.fn("DATE_FORMAT", this.getReportDateExpression(), "%Y-%m-%d"), "report_date"],
-				[
-					Sequelize.fn(
-						"DATE_FORMAT",
-						Sequelize.fn("CONVERT_TZ", Sequelize.col("created_at"), DB_TIMEZONE_OFFSET, REPORT_TIMEZONE_OFFSET),
-						"%Y-%m-%d %H:%i:%s",
-					),
-					"report_time",
-				],
+				[this.getReportDateExpression(), "report_date"],
+				[Sequelize.fn("DATE_FORMAT", Sequelize.col("created_at"), "%Y-%m-%d %H:%i:%s"), "report_time"],
 			],
 			where: dateWhere,
 			order: [["created_at", "ASC"]],
@@ -376,8 +354,8 @@ export class OverviewService {
 		});
 
 		const byDay = [];
-		const start = moment.tz(fromDate, "YYYY-MM-DD", REPORT_TIMEZONE);
-		const end = moment.tz(toDate, "YYYY-MM-DD", REPORT_TIMEZONE);
+		const start = moment(fromDate, "YYYY-MM-DD");
+		const end = moment(toDate, "YYYY-MM-DD");
 		for (const date = start.clone(); date.isSameOrBefore(end, "day"); date.add(1, "day")) {
 			const dateKey = date.format("YYYY-MM-DD");
 			byDay.push({
